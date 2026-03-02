@@ -21,7 +21,9 @@ a {
   width: 100%;
   overflow-x: hidden; /* 메뉴가 밀릴 때 스크롤 방지 */
 }
-
+.footer{
+  text-align: center;
+}
 
 /*
 
