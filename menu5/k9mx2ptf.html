@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AVO — RESEARCH FILE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Caveat:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:         #0d120d;
+      --surface:    #141f14;
+      --border:     #2a3d2a;
+      --accent:     #7ec850;
+      --accent2:    #b5e87a;
+      --accent3:    #3a7a1e;
+      --text:       #e8f5e0;
+      --muted:      #4a6040;
+      --log-bg:     #0a1a0a;
+      --log-text:   #a0d878;
+      --scanline:   rgba(126,200,80,0.03);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'VT323', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, var(--scanline) 0px, var(--scanline) 1px,
+        transparent 1px, transparent 3px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(126,200,80,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(126,200,80,0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px; left: 20px;
+      z-index: 100;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--accent);
+      text-decoration: none;
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      padding: 10px 14px;
+      box-shadow: 3px 3px 0 var(--accent3);
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    .back-btn:hover {
+      box-shadow: 1px 1px 0 var(--accent3);
+      transform: translate(2px, 2px);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 32px 80px;
+    }
+
+    /* ── 헤더 ── */
+    .char-header {
+      text-align: center;
+      margin-bottom: 60px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.1s forwards;
+    }
+    .char-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--accent3);
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+    .char-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(36px, 8vw, 72px);
+      color: var(--accent2);
+      text-shadow: 4px 4px 0 var(--accent3), 8px 8px 0 rgba(126,200,80,0.15);
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+    .char-quote {
+      font-family: 'Caveat', cursive;
+      font-size: 26px;
+      color: var(--accent);
+      font-weight: 600;
+      position: relative;
+      display: inline-block;
+      padding: 0 32px;
+    }
+    .char-quote::before { content: '"'; font-size: 40px; color: var(--accent3); position: absolute; top: -8px; left: 0; }
+    .char-quote::after  { content: '"'; font-size: 40px; color: var(--accent3); position: absolute; top: -8px; right: 0; }
+
+    /* ── 프로필 그리드 ── */
+    .profile-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.3s forwards;
+    }
+
+    .img-card {
+      grid-row: span 2;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 280px;
+    }
+    .char-img-placeholder {
+      width: 160px; height: 160px;
+      border: 2px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 2.2;
+      margin-bottom: 16px;
+    }
+    .char-img-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 20px 24px;
+    }
+    .card-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--accent3);
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .info-table { width: 100%; }
+    .info-table tr { border-bottom: 1px solid var(--border); }
+    .info-table tr:last-child { border-bottom: none; }
+    .info-table td { padding: 8px 4px; font-size: 18px; vertical-align: middle; }
+    .info-table td:first-child {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px; color: var(--muted); width: 80px; letter-spacing: 1px;
+    }
+
+    /* ── 좋아하는것/싫어하는것 ── */
+    .like-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.4s forwards;
+    }
+    .like-card { background: var(--surface); border: 2px solid var(--border); padding: 20px; }
+    .like-card.likes { border-color: var(--accent3); }
+    .like-card.hates { border-color: #3d1a1a; }
+    .like-title { font-family: 'Press Start 2P', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 12px; }
+    .like-card.likes .like-title { color: var(--accent); }
+    .like-card.hates .like-title { color: #cc4444; }
+    .like-list { list-style: none; }
+    .like-list li { font-size: 18px; color: var(--text); padding: 4px 0; line-height: 1.4; }
+    .like-card.likes .like-list li::before { content: '▸ '; color: var(--accent); }
+    .like-card.hates .like-list li::before { content: '▸ '; color: #cc4444; }
+
+    /* ── 관계도 ── */
+    .relation-section {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.5s forwards;
+    }
+    .relation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px; margin-top: 14px;
+    }
+    .relation-card {
+      border: 1px solid var(--border);
+      padding: 14px; text-align: center;
+      transition: border-color 0.2s;
+    }
+    .relation-card:hover { border-color: var(--accent); }
+    .relation-name { font-family: 'Press Start 2P', monospace; font-size: 8px; color: var(--accent2); margin-bottom: 6px; }
+    .relation-type { font-size: 14px; color: var(--muted); }
+    .relation-desc { font-size: 16px; color: var(--text); margin-top: 4px; line-height: 1.3; }
+
+    .pixel-divider {
+      border: none; height: 2px;
+      background: repeating-linear-gradient(90deg, var(--accent3) 0px, var(--accent3) 6px, transparent 6px, transparent 12px);
+      margin: 40px 0; opacity: 0.4;
+    }
+
+    /* ══════════════════════════════════
+       관찰 일지 / 연구 기록 섹션
+       ══════════════════════════════════ */
+    .log-section {
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.6s forwards;
+    }
+
+    .log-header {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+    }
+
+    /* 연구소 느낌 상단 바 */
+    .log-terminal-bar {
+      background: var(--accent3);
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
+    }
+    .log-terminal-bar span {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--accent2);
+      letter-spacing: 1px;
+    }
+
+    /* 연구 기록 카드 - 터미널/연구소 스타일 */
+    .log-entry {
+      background: var(--log-bg);
+      border: 1px solid var(--accent3);
+      border-top: none;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* 왼쪽 세로선 (연구 노트 느낌) */
+    .log-entry::before {
+      content: '';
+      position: absolute;
+      left: 16px; top: 16px; bottom: 16px;
+      width: 2px;
+      background: var(--accent3);
+      opacity: 0.4;
+    }
+
+    .log-meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed var(--accent3);
+    }
+    .log-meta-item {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .log-meta-item span {
+      color: var(--accent);
+    }
+
+    /* 관찰 항목들 */
+    .log-field {
+      margin-bottom: 20px;
+    }
+    .log-field-label {
+      font-size: 10px;
+      color: var(--accent3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .log-field-label::before { content: '> '; color: var(--accent); }
+
+    /* 실제 기록 내용 - 손글씨 폰트로 자연스럽게 */
+    .log-field-content {
+      font-family: 'Caveat', cursive;
+      font-size: 21px;
+      color: var(--log-text);
+      line-height: 1.8;
+      padding-left: 16px;
+      border-left: 2px solid var(--border);
+    }
+
+    /* 중요 표시 */
+    .log-highlight {
+      background: rgba(126,200,80,0.1);
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+      color: var(--accent2);
+    }
+
+    /* 기록자 서명 */
+    .log-sign {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--accent3);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .log-sign-name {
+      font-family: 'Caveat', cursive;
+      font-size: 20px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* 위험도/분류 뱃지 */
+    .log-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 3px 8px;
+      border: 1px solid;
+      letter-spacing: 1px;
+      margin-left: 8px;
+    }
+    .badge-safe    { color: var(--accent);  border-color: var(--accent);  }
+    .badge-caution { color: #ffcc00;        border-color: #ffcc00;        }
+    .badge-danger  { color: #ff4444;        border-color: #ff4444;        }
+
+    @keyframes fadeup {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .profile-section { grid-template-columns: 1fr; }
+      .img-card { grid-row: span 1; }
+      .like-grid { grid-template-columns: 1fr; }
+      .log-meta { flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="../index.html" class="back-btn">← BACK</a>
+
+  <div class="page">
+
+    <!-- 헤더 -->
+    <div class="char-header">
+      <div class="char-tag">// CHARACTER FILE 01</div>
+      <h1 class="char-name">AVO</h1>
+      <!-- ★ 한마디 수정! -->
+      <p class="char-quote">여기에 AVO의 한마디</p>
+    </div>
+
+    <!-- 프로필 -->
+    <div class="profile-section">
+      <div class="img-card">
+        <!-- ★ 이미지 넣으려면 아래 div 지우고 <img src="avo.png"> 넣어! -->
+        <div class="char-img-placeholder">PIXEL<br>ART<br>HERE<br>🥑</div>
+        <div class="char-img-name">AVO</div>
+      </div>
+      <div class="info-card">
+        <div class="card-label">// BASIC INFO</div>
+        <table class="info-table">
+          <tr><td>이름</td><td>AVO</td></tr>
+          <tr><td>나이</td><td>??세</td></tr>
+          <tr><td>종족</td><td>외계인</td></tr>
+          <tr><td>성격</td><td>여기에</td></tr>
+          <tr><td>특기</td><td>여기에</td></tr>
+        </table>
+      </div>
+      <div class="info-card">
+        <div class="card-label">// STATUS</div>
+        <table class="info-table">
+          <tr><td>상태</td><td>여기에</td></tr>
+          <tr><td>거주지</td><td>여기에</td></tr>
+          <tr><td>테마곡</td><td>여기에</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- 좋아하는것/싫어하는것 -->
+    <div class="like-grid">
+      <div class="like-card likes">
+        <div class="like-title">// LIKES ♥</div>
+        <ul class="like-list">
+          <li>여기에</li>
+          <li>여기에</li>
+          <li>여기에</li>
+        </ul>
+      </div>
+      <div class="like-card hates">
+        <div class="like-title">// DISLIKES ✕</div>
+        <ul class="like-list">
+          <li>여기에</li>
+          <li>여기에</li>
+          <li>여기에</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 관계도 -->
+    <div class="relation-section">
+      <div class="card-label">// RELATIONS</div>
+      <div class="relation-grid">
+        <div class="relation-card">
+          <div class="relation-name">ALIEN</div>
+          <div class="relation-type">// 관계 종류</div>
+          <div class="relation-desc">여기에</div>
+        </div>
+        <div class="relation-card">
+          <div class="relation-name">URAANG</div>
+          <div class="relation-type">// 관계 종류</div>
+          <div class="relation-desc">여기에</div>
+        </div>
+        <div class="relation-card">
+          <div class="relation-name">LOOPY</div>
+          <div class="relation-type">// 관계 종류</div>
+          <div class="relation-desc">여기에</div>
+        </div>
+        <div class="relation-card">
+          <div class="relation-name">???</div>
+          <div class="relation-type">// ???</div>
+          <div class="relation-desc">알 수 없음</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="pixel-divider">
+
+    <!-- 관찰 일지 -->
+    <div class="log-section">
+      <div class="log-header">// OBSERVATION LOG ✦</div>
+
+      <!-- ★ 기록 추가하려면 이 블록 통째로 복붙하면 돼! -->
+      <div class="log-terminal-bar">
+        <span>FILE: AVO_OBS_001.LOG</span>
+        <span>STATUS: CLASSIFIED <span class="log-badge badge-safe">SAFE</span></span>
+      </div>
+      <div class="log-entry">
+        <div class="log-meta">
+          <div class="log-meta-item">DATE: <span>20XX.XX.XX</span></div>
+          <div class="log-meta-item">OBSERVER: <span>여기에 관찰자 이름</span></div>
+          <div class="log-meta-item">LOCATION: <span>여기에 장소</span></div>
+        </div>
+
+        <!-- ★ 항목들 자유롭게 추가/삭제해! -->
+        <div class="log-field">
+          <div class="log-field-label">외형 관찰</div>
+          <div class="log-field-content">
+            여기에 AVO의 외형을 길고 재미있게 적어줘.<br>
+            줄바꾸고 싶으면 &lt;br&gt; 쓰면 돼!
+          </div>
+        </div>
+
+        <div class="log-field">
+          <div class="log-field-label">행동 패턴</div>
+          <div class="log-field-content">
+            여기에 행동 특성 기록.
+            <!-- 중요한 내용은 이렇게 강조! -->
+            <div class="log-highlight">⚠ 특이사항: 여기에 중요한 관찰 내용</div>
+          </div>
+        </div>
+
+        <div class="log-field">
+          <div class="log-field-label">연구원 소감</div>
+          <div class="log-field-content">
+            여기엔 좀 더 캐주얼하게, 연구원의 개인 감상 같은 걸 적어도 재밌어!
+          </div>
+        </div>
+
+        <div class="log-sign">
+          <span>SMILEY337 RESEARCH DIVISION</span>
+          <span class="log-sign-name">— 서명</span>
+        </div>
+      </div>
+
+      <!-- 두 번째 기록 예시 -->
+      <div class="log-terminal-bar">
+        <span>FILE: AVO_OBS_002.LOG</span>
+        <span>STATUS: CLASSIFIED <span class="log-badge badge-caution">CAUTION</span></span>
+      </div>
+      <div class="log-entry">
+        <div class="log-meta">
+          <div class="log-meta-item">DATE: <span>20XX.XX.XX</span></div>
+          <div class="log-meta-item">OBSERVER: <span>여기에</span></div>
+          <div class="log-meta-item">LOCATION: <span>여기에</span></div>
+        </div>
+
+        <div class="log-field">
+          <div class="log-field-label">관찰 내용</div>
+          <div class="log-field-content">
+            두 번째 기록 내용.
+          </div>
+        </div>
+
+        <div class="log-sign">
+          <span>SMILEY337 RESEARCH DIVISION</span>
+          <span class="log-sign-name">— 서명</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
