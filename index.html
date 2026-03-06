@@ -1,84 +1,342 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <title>Page Title</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smiley337</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-    <h1>Title Page</h1> 
-    <h1>This is a Heading</h1> 
-    </header>
-    <div class="menu-toggle">☰</div>
-    <div class="MainContainer">
-    <nav>
-        <ul class="MenuBar">
-            <!--아래 모든 #들은 링크로 대체!!!!-->
-            <li>
-                <a href="#">메뉴1</a>
-                <ul class="SubMenu">
-                    <li><a href="#">submenu01</a></li>
-                    <li><a href="#">submenu02</a></li>
-                    <li><a href="#">submenu03</a></li>
-                    <li><a href="#">submenu04</a></li>
-                    <li><a href="#">submenu05</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#">MENU2</a>
-                <ul class="SubMenu">
-                    <li><a href="#">submenu01</a></li>
-                    <li><a href="#">submenu02</a></li>
-                    <li><a href="#">submenu03</a></li>
-                    <li><a href="#">submenu04</a></li>
-                    <li><a href="#">submenu05</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#">MENU3</a>
-                <ul class="SubMenu">
-                    <li><a href="#">submenu01</a></li>
-                    <li><a href="#">submenu02</a></li>
-                    <li><a href="#">submenu03</a></li>
-                    <li><a href="#">submenu04</a></li>
-                    <li><a href="#">submenu05</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#">MENU4</a>
-                <ul class="SubMenu">
-                    <li><a href="#">submenu01</a></li>
-                    <li><a href="#">submenu02</a></li>
-                    <li><a href="#">submenu03</a></li>
-                    <li><a href="#">submenu04</a></li>
-                    <li><a href="#">submenu05</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#">인물</a>
-                <ul class="SubMenu">
-                    <li><a href="#">AVO</a></li>
-                    <li><a href="#">ALIEN</a></li>
-                    <li><a href="#">URAANG</a></li>
-                    <li><a href="#">LOOPY</a></li>
-                    <li><a href="#">???</a></li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
 
+  <!-- BGM (자동재생) -->
+  <!-- 
+    ★ BGM 파일 넣는 법:
+    mp3 파일을 같은 폴더에 넣고 src="파일명.mp3" 으로 바꿔줘.
+    또는 외부 URL도 가능해.
+  -->
+  <audio id="bgm" loop>
+    <source src="StarAndChill.wav" type="audio/mpeg">
+  </audio>
+
+  <!-- BGM 컨트롤 버튼 -->
+  <div class="bgm-player" id="bgmBtn">
+    <span class="bgm-icon">♪</span>
+    <span class="bgm-label">BGM</span>
+    <div class="bgm-bar" id="bgmBar">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- 햄버거 버튼 -->
+  <div class="menu-toggle" id="menuToggle">☰</div>
+
+  <!-- 사이드바 -->
+  <nav id="mainNav">
+    <div class="nav-inner">
+      <div class="nav-title">// NAVIGATE</div>
+      <ul class="MenuBar">
+        <li>
+          <a href="#">메뉴1</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU2</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU3</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU4</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU5</a>
+          <ul class="SubMenu">
+            <li><a href="menu5/k9mx2ptf.html">AVO</a></li>
+            <li><a href="menu5/r4nw7qvb.html">ALIEN</a></li>
+            <li><a href="menu5/j6tz3yhs.html">URAANG</a></li>
+            <li><a href="menu5/w8ck5dxe.html">LOOPY</a></li>
+            <li><a href="menu5/b2fg9urn.html">???</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="MainContainer" id="mainContainer">
     <div class="ContentWrap">
 
-        <p>This is a body</p>
-    </div>
-    </div>
-    <footer>
-        <div class="footer">
-            <p>© <span id="year"></span> Smiley337. All rights reserved.</p>
-            <p>Hosted with GitHub Pages.</p>
+      <!-- ── 히어로 섹션 ── -->
+      <section class="hero">
+        <!-- 별 파티클 캔버스 (JS로 그려짐) -->
+        <canvas id="starCanvas"></canvas>
+        <div class="hero-glow"></div>
+        <div class="hero-content">
+          <div class="hero-tag">// WELCOME TO</div>
+          <h1 class="hero-title">SMILEY<span>337</span></h1>
+          <!-- 외계어 느낌 로딩 텍스트 - JS가 타이핑 효과로 출력해줘 -->
+          <p class="hero-sub" id="alienText"></p>
+          <p class="hero-scroll">▼ SCROLL DOWN ▼</p>
         </div>
-    </footer>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="script.js"></script>
+      </section>
+
+      <hr class="pixel-divider">
+
+      <!-- ── 메뉴 카드 섹션 ── -->
+      <section class="section">
+        <div class="section-label reveal">// MENU SELECT</div>
+        <h2 class="section-title reveal reveal-delay-1">EXPLORE</h2>
+
+        <div class="menu-grid">
+          <!-- 카드 아이콘은 나중에 실제 픽셀 이미지로 바꿀 수 있어! -->
+          <!-- 지금은 이모지로 임시 표현 -->
+          <a href="#" class="menu-card reveal reveal-delay-1">
+            <span class="menu-card-icon">🌐</span>
+            <span class="menu-card-num">01 //</span>
+            <div class="menu-card-title">메뉴1</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-2">
+            <span class="menu-card-icon">🪐</span>
+            <span class="menu-card-num">02 //</span>
+            <div class="menu-card-title">MENU2</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-3">
+            <span class="menu-card-icon">🛸</span>
+            <span class="menu-card-num">03 //</span>
+            <div class="menu-card-title">MENU3</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-4">
+            <span class="menu-card-icon">⭐</span>
+            <span class="menu-card-num">04 //</span>
+            <div class="menu-card-title">MENU4</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <!-- MENU5: 캐릭터 카드 (잠금) -->
+          <a href="lock.html?dest=menu5/k9mx2ptf" class="menu-card reveal reveal-delay-5">
+            <span class="menu-card-icon">👽</span>
+            <span class="menu-card-num">05 //</span>
+            <div class="menu-card-title">CHARACTERS</div>
+            <div class="menu-card-desc">🔒 RESTRICTED</div>
+            <span class="menu-card-lock">🔒</span>
+          </a>
+          <!-- ??? 미스터리 카드 (글리치 효과) -->
+          <a href="#" class="menu-card mystery reveal reveal-delay-5">
+            <span class="menu-card-icon">👾</span>
+            <span class="menu-card-num">?? //</span>
+            <div class="menu-card-title">???</div>
+            <div class="menu-card-desc">_ _ _ _ _ _</div>
+          </a>
+        </div>
+      </section>
+
+      <hr class="pixel-divider">
+
+      <!-- ── 푸터 ── -->
+      <footer>
+        <p>SMILEY337</p>
+        <p>© <span id="year"></span> Smiley337. All rights reserved.</p>
+        <p>Hosted with GitHub Pages.</p>
+      </footer>
+
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // ── 별 파티클 (Canvas) ──
+    const canvas = document.getElementById('starCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width  = canvas.parentElement.offsetWidth;
+      canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // 별 객체 배열 생성
+    const stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 0.5,          // 반지름
+      speed: Math.random() * 0.3 + 0.05,   // 낙하 속도
+      opacity: Math.random(),
+      blink: Math.random() * 0.02 + 0.005  // 반짝임 속도
+    }));
+
+    // 픽셀 UFO (간단한 사각형 픽셀아트)
+    const ufos = Array.from({ length: 2 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.5,
+      speed: Math.random() * 0.4 + 0.2,
+      dir: Math.random() > 0.5 ? 1 : -1
+    }));
+
+    function drawPixelUFO(x, y) {
+      const s = 4; // 픽셀 1칸 크기
+      ctx.fillStyle = '#00ff88';
+      // UFO 몸통
+      [[1,1,1],[1,1,1],[0,1,0]].forEach((row, ry) =>
+        row.forEach((cell, rx) => {
+          if (cell) ctx.fillRect(x + rx*s, y + ry*s, s, s);
+        })
+      );
+      ctx.fillStyle = '#00ccff';
+      // UFO 불빛
+      ctx.fillRect(x + s, y - s, s, s);
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 별 그리기
+      stars.forEach(star => {
+        star.opacity += star.blink;
+        if (star.opacity > 1 || star.opacity < 0) star.blink *= -1;
+        star.y += star.speed;
+        if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${Math.random() > 0.9 ? '0,204,255' : '0,255,136'}, ${star.opacity})`;
+        ctx.fill();
+      });
+
+      // UFO 그리기
+      ufos.forEach(ufo => {
+        ufo.x += ufo.speed * ufo.dir;
+        if (ufo.x > canvas.width + 20) ufo.x = -20;
+        if (ufo.x < -20) ufo.x = canvas.width + 20;
+        drawPixelUFO(ufo.x, ufo.y);
+      });
+
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
+
+    // ── 외계어 타이핑 효과 ──
+    // 먼저 외계어처럼 보이다가 → 실제 텍스트로 해독되는 효과
+    const alienEl = document.getElementById('alienText');
+    const finalText = 'SIGNAL RECEIVED ★';
+    // 외계어 문자 풀
+    const alienChars = 'ᗩᗺᑕᗞᕮᖴᘜᕼᓰᒍᛕᒪᘻᑎᓍᕵᘉᖇᔕᖶᑌᐯᘺ᙭ᖻᔗ';
+
+    let decoded = 0; // 몇 글자까지 해독됐는지
+
+    function typeAlien() {
+      let display = '';
+      for (let i = 0; i < finalText.length; i++) {
+        if (i < decoded) {
+          display += finalText[i]; // 해독된 글자
+        } else {
+          // 아직 해독 안 된 글자 → 랜덤 외계어
+          display += alienChars[Math.floor(Math.random() * alienChars.length)];
+        }
+      }
+      alienEl.textContent = display;
+    }
+
+    // 0.8초 후 시작, 0.1초마다 한 글자씩 해독
+    setTimeout(() => {
+      alienEl.style.opacity = 1;
+      const decodeInterval = setInterval(() => {
+        typeAlien();
+        if (decoded < finalText.length) {
+          decoded++;
+        } else {
+          clearInterval(decodeInterval);
+        }
+      }, 100);
+    }, 800);
+
+    // ── 연도 ──
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ── BGM 자동재생 ──
+    const bgm = document.getElementById('bgm');
+    const bgmBtn = document.getElementById('bgmBtn');
+    const bgmBar = document.getElementById('bgmBar');
+    let playing = false;
+
+    // 브라우저 정책상 첫 클릭/상호작용 후 자동재생 시도
+    function tryPlay() {
+      bgm.play().then(() => {
+        playing = true;
+        bgmBar.classList.remove('paused');
+      }).catch(() => {
+        // 자동재생 차단된 경우 → 버튼 클릭 유도
+      });
+    }
+
+    // 페이지 로드 시 바로 시도
+    window.addEventListener('load', tryPlay);
+    // 첫 클릭 시도
+    document.addEventListener('click', function firstClick() {
+      if (!playing) tryPlay();
+      document.removeEventListener('click', firstClick);
+    }, { once: true });
+
+    // BGM 버튼 토글
+    bgmBtn.addEventListener('click', () => {
+      if (playing) {
+        bgm.pause();
+        playing = false;
+        bgmBar.classList.add('paused');
+      } else {
+        bgm.play();
+        playing = true;
+        bgmBar.classList.remove('paused');
+      }
+    });
+
+    // ── 스크롤 애니메이션 (IntersectionObserver) ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── 햄버거 메뉴 ──
+    // (서브메뉴/잠금 처리는 script.js에서 담당)
+    $('#menuToggle').click(function(e) {
+      e.stopPropagation();
+      $('#mainNav').toggleClass('active');
+    });
+  </script>
 </body>
 </html>
