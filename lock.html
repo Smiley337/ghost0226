@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>🔒 Access Required</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ================================================
+       ★ 디자인 커스터마이징은 여기만 건드리면 돼! ★
+       ================================================ */
+    :root {
+      /* 배경 */
+      --bg:         #0d0d0f;   /* 전체 배경색 */
+      --surface:    #16161a;   /* 카드 배경색 */
+      --border:     #2a2a32;   /* 테두리 색 */
+
+      /* 포인트 색상 (버튼, 글로우, 강조 전부 여기서 결정됨) */
+      --accent:     #17c4b6;   /* 메인 포인트 색 (보라) */
+      --accent2:    #28c417;   /* 서브 포인트 색 (핑크) */
+
+      /* 글자 */
+      --text:       #e8e8f0;   /* 기본 글자색 */
+      --muted:      #5a5a70;   /* 흐린 글자색 */
+
+      /* 상태 색상 */
+      --error:      #ff4466;   /* 오류 메시지 색 */
+      --success:    #44ffaa;   /* 성공 시 색 */
+    }
+    /* ================================================ */
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(127,23,196,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(127,23,196,0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 0;
+    }
+
+    .glow-bg {
+      position: fixed;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(127,23,196,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+      50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px 40px;
+      width: 380px;
+      box-shadow: 0 0 60px rgba(127,23,196,0.15), 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15%      { transform: translateX(-8px); }
+      30%      { transform: translateX(8px); }
+      45%      { transform: translateX(-6px); }
+      60%      { transform: translateX(6px); }
+      75%      { transform: translateX(-3px); }
+      90%      { transform: translateX(3px); }
+    }
+    .card.shake { animation: shake 0.5s ease; }
+
+    @keyframes success-flash {
+      0%   { border-color: var(--border); }
+      50%  { border-color: var(--success); box-shadow: 0 0 60px rgba(68,255,170,0.3); }
+      100% { border-color: var(--success); }
+    }
+    .card.success { animation: success-flash 0.5s ease forwards; }
+
+    .lock-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(127,23,196,0.4);
+    }
+    .lock-icon.unlocked { background: linear-gradient(135deg, #44ffaa, #00ccff); }
+
+    .label-top {
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .dest-info {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .dest-info span { color: var(--accent2); }
+
+    .input-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 48px 14px 16px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      letter-spacing: 4px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(127,23,196,0.2);
+    }
+
+    input::placeholder { letter-spacing: 1px; color: var(--muted); }
+
+    .toggle-pw {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      user-select: none;
+      transition: color 0.2s;
+    }
+    .toggle-pw:hover { color: var(--text); }
+
+    .error-msg {
+      font-size: 11px;
+      color: var(--error);
+      height: 16px;
+      margin-bottom: 20px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .error-msg.show { opacity: 1; }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    button:hover  { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+    .attempts { font-size: 10px; color: var(--muted); text-align: center; }
+    .attempts span { color: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="glow-bg"></div>
+
+  <div class="card" id="card">
+    <div class="lock-icon" id="lockIcon">🔒</div>
+    <div class="label-top">// restricted access</div>
+    <h2>비밀번호를<br>입력하세요</h2>
+    <div class="dest-info">이동 대상: <span id="destLabel">페이지</span></div>
+
+    <div class="input-wrap">
+      <input type="password" id="pwInput" placeholder="password" autocomplete="off" />
+      <span class="toggle-pw" id="togglePw">👁</span>
+    </div>
+    <div class="error-msg" id="errorMsg">⚠ 비밀번호가 틀렸습니다</div>
+
+    <button id="enterBtn">입장하기 →</button>
+
+    <div class="divider"></div>
+    <div class="attempts">시도 횟수: <span id="attemptCount">0</span> / 5</div>
+
+    <a href="index.html" class="back-link">← 메인으로 돌아가기</a>
+  </div>
+
+  <script>
+    // =============================================
+    //  ★ 비밀번호 설정 ★
+    //
+    //  평문 비번을 절대 여기에 쓰지 마!
+    //  아래 사이트에서 SHA-256 해시로 변환한 값만 붙여넣어:
+    //  👉 https://emn178.github.io/online-tools/sha256.html
+    //
+    //  사용법: 사이트에서 비번 입력 → 해시값 복사 → 아래에 붙여넣기
+    // =============================================
+    const HASHED_PASSWORDS = {
+      // 형식: "파일명": "SHA-256 해시값"
+      "default":   "c07513328104b15e2b3be00a018a690231b1fdf8fa441b5103182b3d8199aa55",
+      //            ↑ 이건 "friends123"의 해시값 예시야. 직접 바꿔! (바뀜)
+
+      // "submenu01": "여기에_해시값_붙여넣기",
+      // "submenu03": "다른_해시값",
+    };
+    // =============================================
+
+    const params = new URLSearchParams(window.location.search);
+    const dest = params.get('dest') || 'index';
+    document.getElementById('destLabel').textContent = dest + '.html';
+
+    const correctHash = HASHED_PASSWORDS[dest] || HASHED_PASSWORDS["default"];
+
+    let attempts = 0;
+    const MAX = 5;
+
+    const card     = document.getElementById('card');
+    const pwInput  = document.getElementById('pwInput');
+    const errorMsg = document.getElementById('errorMsg');
+    const togglePw = document.getElementById('togglePw');
+    const lockIcon = document.getElementById('lockIcon');
+    const attCount = document.getElementById('attemptCount');
+
+    togglePw.addEventListener('click', () => {
+      const isText = pwInput.type === 'text';
+      pwInput.type = isText ? 'password' : 'text';
+      togglePw.textContent = isText ? '👁' : '🙈';
+    });
+
+    // SHA-256 해시 함수 (브라우저 내장 Web Crypto API 사용)
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function tryEnter() {
+      if (attempts >= MAX) return;
+
+      const val = pwInput.value.trim();
+      if (!val) return;
+
+      attempts++;
+      attCount.textContent = attempts;
+
+      const inputHash = await sha256(val);
+
+      if (inputHash === correctHash) {
+        errorMsg.classList.remove('show');
+        card.classList.add('success');
+        lockIcon.textContent = '🔓';
+        lockIcon.classList.add('unlocked');
+        document.getElementById('enterBtn').textContent = '✓ 입장 중...';
+        setTimeout(() => { window.location.href = dest + '.html'; }, 700);
+      } else {
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        errorMsg.classList.add('show');
+        pwInput.value = '';
+        pwInput.focus();
+
+        if (attempts >= MAX) {
+          document.getElementById('enterBtn').textContent = '잠금됨 🔒';
+          document.getElementById('enterBtn').disabled = true;
+          document.getElementById('enterBtn').style.opacity = '0.4';
+          errorMsg.textContent = '⛔ 시도 횟수 초과. 메인으로 돌아가세요.';
+        }
+      }
+    }
+
+    document.getElementById('enterBtn').addEventListener('click', tryEnter);
+    pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryEnter(); });
+    pwInput.focus();
+  </script>
+</body>
+</html>
