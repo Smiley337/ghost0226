@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHARACTERS — SMILEY337</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0a0a0f;
+      --surface: #12121a;
+      --border:  #2a2a3a;
+      --pixel:   #00ff88;
+      --pixel2:  #ff6b35;
+      --pixel3:  #00ccff;
+      --text:    #e0e0f0;
+      --muted:   #556066;
+      --scanline: rgba(0,255,136,0.03);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'VT323', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, var(--scanline) 0px, var(--scanline) 1px,
+        transparent 1px, transparent 3px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,136,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 20px; left: 20px;
+      z-index: 100;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--pixel);
+      text-decoration: none;
+      background: var(--surface);
+      border: 2px solid var(--pixel);
+      padding: 10px 14px;
+      box-shadow: 3px 3px 0 #006633;
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    .back-btn:hover {
+      box-shadow: 1px 1px 0 #006633;
+      transform: translate(2px, 2px);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 32px 80px;
+    }
+
+    /* ── 헤더 ── */
+    .page-header {
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.1s forwards;
+    }
+    .page-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+    .page-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(18px, 4vw, 36px);
+      color: var(--text);
+      text-shadow: 3px 3px 0 var(--pixel), 6px 6px 0 rgba(0,255,136,0.1);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .page-title span { color: var(--pixel); }
+    .page-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── 터미널 상태바 ── */
+    .terminal-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.2s forwards;
+    }
+    .terminal-bar span { color: var(--pixel); }
+
+    /* ── 파일 리스트 ── */
+    .file-list {
+      border: 1px solid var(--border);
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.3s forwards;
+    }
+
+    /* 파일 헤더 행 */
+    .file-list-header {
+      display: grid;
+      grid-template-columns: 48px 1fr 120px 100px 80px;
+      background: var(--surface);
+      border-bottom: 2px solid var(--pixel);
+      padding: 10px 20px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      gap: 12px;
+    }
+
+    /* 각 캐릭터 파일 행 */
+    .file-item {
+      display: grid;
+      grid-template-columns: 48px 1fr 120px 100px 80px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      transition: background 0.15s;
+      cursor: pointer;
+      gap: 12px;
+      align-items: center;
+      min-height: 64px;
+      position: relative;
+    }
+    .file-item:last-child { border-bottom: none; }
+    .file-item:hover { background: rgba(0,255,136,0.04); }
+    .file-item:hover .file-name { color: var(--pixel); }
+    .file-item:hover .file-arrow { opacity: 1; }
+
+    /* 파일 아이콘 */
+    .file-icon {
+      font-size: 22px;
+      text-align: center;
+    }
+
+    /* 파일명 + 설명 */
+    .file-name-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .file-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--text);
+      letter-spacing: 1px;
+      transition: color 0.15s;
+    }
+    .file-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* 날짜 */
+    .file-date {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* 분류 뱃지 */
+    .file-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      padding: 4px 8px;
+      border: 1px solid;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    .badge-open    { color: var(--pixel);  border-color: var(--pixel);  }
+    .badge-locked  { color: var(--pixel2); border-color: var(--pixel2); }
+    .badge-unknown { color: #cc00ff;       border-color: #cc00ff;       }
+
+    /* 화살표 */
+    .file-arrow {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--pixel);
+      opacity: 0;
+      transition: opacity 0.15s;
+      text-align: right;
+    }
+
+    /* ??? 행 특별 스타일 */
+    .file-item.mystery {
+      background: #0a000a;
+    }
+    .file-item.mystery:hover { background: #120012; }
+    .file-item.mystery .file-name { color: #cc00ff; animation: glitch 4s infinite; }
+    @keyframes glitch {
+      0%,90%,100% { text-shadow: none; opacity: 1; }
+      92% { text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff; opacity: 0.8; }
+      94% { text-shadow: -2px 0 #ff00ff, 2px 0 #00ffff; opacity: 0.6; }
+      96% { text-shadow: none; opacity: 1; }
+    }
+    .file-item.mystery .file-desc { color: #660066; animation: blink 3s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── 하단 상태바 ── */
+    .status-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--pixel);
+      padding: 8px 20px;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeup 0.7s ease 0.5s forwards;
+    }
+    .status-bar span { color: var(--pixel); }
+
+    @keyframes fadeup {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .file-list-header { grid-template-columns: 36px 1fr 80px; }
+      .file-list-header .col-date,
+      .file-list-header .col-arrow { display: none; }
+      .file-item { grid-template-columns: 36px 1fr 80px; }
+      .file-date, .file-arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="../index.html" class="back-btn">← BACK</a>
+
+  <div class="page">
+
+    <!-- 헤더 -->
+    <div class="page-header">
+      <div class="page-tag">// SMILEY337 DATABASE</div>
+      <h1 class="page-title">CHARACTER<br><span>FILES</span></h1>
+      <p class="page-desc">TOTAL 5 FILES FOUND — SELECT TO OPEN</p>
+    </div>
+
+    <!-- 터미널 상단바 -->
+    <div class="terminal-bar">
+      <span>PATH: /menu5/characters/</span>
+      <span>ACCESS: <span>RESTRICTED</span></span>
+    </div>
+
+    <!-- 파일 리스트 -->
+    <div class="file-list">
+
+      <!-- 헤더 행 -->
+      <div class="file-list-header">
+        <div></div>
+        <div>FILENAME</div>
+        <div class="col-date">LAST MODIFIED</div>
+        <div>STATUS</div>
+        <div class="col-arrow"></div>
+      </div>
+
+      <!-- ★ 각 캐릭터 파일 행 — href를 실제 파일 경로로 바꿔줘! -->
+
+      <a href="../lock.html?dest=menu5/k9mx2ptf" class="file-item">
+        <div class="file-icon">🥑</div>
+        <div class="file-name-wrap">
+          <div class="file-name">AVO</div>
+          <div class="file-desc">AVO_RESEARCH_FILE.LOG</div>
+        </div>
+        <div class="file-date">20XX.XX.XX</div>
+        <div><span class="file-badge badge-open">OPEN</span></div>
+        <div class="file-arrow">▶</div>
+      </a>
+
+      <a href="../lock.html?dest=menu5/r4nw7qvb.html" class="file-item">
+        <div class="file-icon">👽</div>
+        <div class="file-name-wrap">
+          <div class="file-name">ALIEN</div>
+          <div class="file-desc">ALIEN_RESEARCH_FILE.LOG</div>
+        </div>
+        <div class="file-date">20XX.XX.XX</div>
+        <div><span class="file-badge badge-open">OPEN</span></div>
+        <div class="file-arrow">▶</div>
+      </a>
+
+      <a href="../lock.html?dest=menu5/j6tz3yhs.html" class="file-item">
+        <div class="file-icon">🌀</div>
+        <div class="file-name-wrap">
+          <div class="file-name">URAANG</div>
+          <div class="file-desc">URAANG_RESEARCH_FILE.LOG</div>
+        </div>
+        <div class="file-date">20XX.XX.XX</div>
+        <div><span class="file-badge badge-open">OPEN</span></div>
+        <div class="file-arrow">▶</div>
+      </a>
+
+      <a href="../lock.html?dest=menu5/w8ck5dxe.html" class="file-item">
+        <div class="file-icon">🔁</div>
+        <div class="file-name-wrap">
+          <div class="file-name">LOOPY</div>
+          <div class="file-desc">LOOPY_RESEARCH_FILE.LOG</div>
+        </div>
+        <div class="file-date">20XX.XX.XX</div>
+        <div><span class="file-badge badge-open">OPEN</span></div>
+        <div class="file-arrow">▶</div>
+      </a>
+
+      <!-- ??? 미스터리 -->
+      <a href="b2fg9urn.html" class="file-item mystery">
+        <div class="file-icon">👾</div>
+        <div class="file-name-wrap">
+          <div class="file-name">???</div>
+          <div class="file-desc">_ _ _ _ _ _.LOG</div>
+        </div>
+        <div class="file-date">???.??.??</div>
+        <div><span class="file-badge badge-unknown">??????</span></div>
+        <div class="file-arrow">▶</div>
+      </a>
+
+    </div>
+
+    <!-- 하단 상태바 -->
+    <div class="status-bar">
+      <span>5 ITEMS</span>
+      <span>SMILEY337 RESEARCH DIVISION — <span>AUTHORIZED ACCESS ONLY</span></span>
+    </div>
+
+  </div>
+</body>
+</html>
