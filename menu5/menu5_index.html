@@ -77,7 +77,6 @@
       padding: 80px 32px 80px;
     }
 
-    /* ── 헤더 ── */
     .page-header {
       margin-bottom: 48px;
       opacity: 0;
@@ -106,7 +105,6 @@
       letter-spacing: 1px;
     }
 
-    /* ── 터미널 상태바 ── */
     .terminal-bar {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -123,7 +121,6 @@
     }
     .terminal-bar span { color: var(--pixel); }
 
-    /* ── 파일 리스트 ── */
     .file-list {
       border: 1px solid var(--border);
       overflow: hidden;
@@ -131,7 +128,6 @@
       animation: fadeup 0.7s ease 0.3s forwards;
     }
 
-    /* 파일 헤더 행 */
     .file-list-header {
       display: grid;
       grid-template-columns: 48px 1fr 120px 100px 80px;
@@ -145,7 +141,6 @@
       gap: 12px;
     }
 
-    /* 각 캐릭터 파일 행 */
     .file-item {
       display: grid;
       grid-template-columns: 48px 1fr 120px 100px 80px;
@@ -165,13 +160,8 @@
     .file-item:hover .file-name { color: var(--pixel); }
     .file-item:hover .file-arrow { opacity: 1; }
 
-    /* 파일 아이콘 */
-    .file-icon {
-      font-size: 22px;
-      text-align: center;
-    }
+    .file-icon { font-size: 22px; text-align: center; }
 
-    /* 파일명 + 설명 */
     .file-name-wrap { display: flex; flex-direction: column; gap: 4px; }
     .file-name {
       font-family: 'Press Start 2P', monospace;
@@ -187,7 +177,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* 날짜 */
     .file-date {
       font-family: 'Share Tech Mono', monospace;
       font-size: 12px;
@@ -195,7 +184,6 @@
       letter-spacing: 1px;
     }
 
-    /* 분류 뱃지 */
     .file-badge {
       font-family: 'Press Start 2P', monospace;
       font-size: 6px;
@@ -208,7 +196,6 @@
     .badge-locked  { color: var(--pixel2); border-color: var(--pixel2); }
     .badge-unknown { color: #cc00ff;       border-color: #cc00ff;       }
 
-    /* 화살표 */
     .file-arrow {
       font-family: 'Press Start 2P', monospace;
       font-size: 8px;
@@ -218,10 +205,7 @@
       text-align: right;
     }
 
-    /* ??? 행 특별 스타일 */
-    .file-item.mystery {
-      background: #0a000a;
-    }
+    .file-item.mystery { background: #0a000a; }
     .file-item.mystery:hover { background: #120012; }
     .file-item.mystery .file-name { color: #cc00ff; animation: glitch 4s infinite; }
     @keyframes glitch {
@@ -233,7 +217,6 @@
     .file-item.mystery .file-desc { color: #660066; animation: blink 3s step-end infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* ── 하단 상태바 ── */
     .status-bar {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -270,23 +253,19 @@
 
   <div class="page">
 
-    <!-- 헤더 -->
     <div class="page-header">
       <div class="page-tag">// SMILEY337 DATABASE</div>
       <h1 class="page-title">CHARACTER<br><span>FILES</span></h1>
       <p class="page-desc">TOTAL 5 FILES FOUND — SELECT TO OPEN</p>
     </div>
 
-    <!-- 터미널 상단바 -->
     <div class="terminal-bar">
       <span>PATH: /menu5/characters/</span>
       <span>ACCESS: <span>RESTRICTED</span></span>
     </div>
 
-    <!-- 파일 리스트 -->
     <div class="file-list">
 
-      <!-- 헤더 행 -->
       <div class="file-list-header">
         <div></div>
         <div>FILENAME</div>
@@ -295,9 +274,9 @@
         <div class="col-arrow"></div>
       </div>
 
-      <!-- ★ 각 캐릭터 파일 행 — href를 실제 파일 경로로 바꿔줘! -->
+      <!-- ★ href="#" 으로 바꾸고 onclick으로 잠금 처리 -->
 
-      <a href="../lock.html?dest=menu5/k9mx2ptf" class="file-item">
+      <a href="#" onclick="goLock('menu5/k9mx2ptf'); return false;" class="file-item">
         <div class="file-icon">🥑</div>
         <div class="file-name-wrap">
           <div class="file-name">AVO</div>
@@ -308,7 +287,7 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <a href="../lock.html?dest=menu5/r4nw7qvb.html" class="file-item">
+      <a href="#" onclick="goLock('menu5/r4nw7qvb'); return false;" class="file-item">
         <div class="file-icon">👽</div>
         <div class="file-name-wrap">
           <div class="file-name">ALIEN</div>
@@ -319,7 +298,7 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <a href="../lock.html?dest=menu5/j6tz3yhs.html" class="file-item">
+      <a href="#" onclick="goLock('menu5/j6tz3yhs'); return false;" class="file-item">
         <div class="file-icon">🌀</div>
         <div class="file-name-wrap">
           <div class="file-name">URAANG</div>
@@ -330,7 +309,7 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <a href="../lock.html?dest=menu5/w8ck5dxe.html" class="file-item">
+      <a href="#" onclick="goLock('menu5/w8ck5dxe'); return false;" class="file-item">
         <div class="file-icon">🔁</div>
         <div class="file-name-wrap">
           <div class="file-name">LOOPY</div>
@@ -341,8 +320,8 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <!-- ??? 미스터리 -->
-      <a href="b2fg9urn.html" class="file-item mystery">
+      <!-- ??? 미스터리 - 잠금 처리 -->
+      <a href="#" onclick="goLock('menu5/b2fg9urn'); return false;" class="file-item mystery">
         <div class="file-icon">👾</div>
         <div class="file-name-wrap">
           <div class="file-name">???</div>
@@ -355,12 +334,19 @@
 
     </div>
 
-    <!-- 하단 상태바 -->
     <div class="status-bar">
       <span>5 ITEMS</span>
       <span>SMILEY337 RESEARCH DIVISION — <span>AUTHORIZED ACCESS ONLY</span></span>
     </div>
 
   </div>
+
+  <script>
+    // ★ sessionStorage에 목적지 저장 후 lock.html로 이동
+    function goLock(dest) {
+      sessionStorage.setItem('lockDest', dest);
+      window.location.href = '../lock.html';
+    }
+  </script>
 </body>
 </html>
