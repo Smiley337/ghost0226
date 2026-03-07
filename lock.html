@@ -211,7 +211,9 @@
     <div class="lock-icon" id="lockIcon">🔒</div>
     <div class="label-top">// restricted access</div>
     <h2>비밀번호를<br>입력하세요</h2>
-    <div class="dest-info">DESTINATION: <span id="destLabel">...</span></div>
+
+    <!-- ★ destLabel이 여기 있어야 JS에서 참조 가능 -->
+    <div class="dest-info">TARGET: <span id="destLabel">—</span></div>
 
     <div class="input-wrap">
       <input type="password" id="pwInput" placeholder="password" autocomplete="off" />
@@ -229,23 +231,26 @@
 
   <script>
     // =============================================
-    //  ★ 비밀번호 설정 (SHA-256 해시값)
+    //  ★ 비밀번호 설정 ★
+    //  SHA-256 해시값만 여기에 넣어줘
     //  👉 https://emn178.github.io/online-tools/sha256.html
     // =============================================
     const HASHED_PASSWORDS = {
       "default":   "c07513328104b15e2b3be00a018a690231b1fdf8fa441b5103182b3d8199aa55",
-      // "submenu01": "여기에_해시값",
+      // "submenu01": "해시값",
     };
+    // =============================================
 
-    // ★ URL 파라미터 대신 sessionStorage에서 목적지 읽기
-    const dest = sessionStorage.getItem('lockDest') || 'index';
+    const params = new URLSearchParams(window.location.search);
+    // dest 파라미터 예: "menu5/k9mx2ptf"  (확장자 없음)
+    const dest = params.get('dest') || 'index';
 
-    // destLabel은 보여줘도 되는 경우에만 표시 (원하면 아래 줄 지워도 됨)
-    document.getElementById('destLabel').textContent = 'classified';
+    // destLabel에 표시 (파일명 부분만)
+    const destFileName = dest.split('/').pop();
+    document.getElementById('destLabel').textContent = destFileName + '.html';
 
-    // dest에서 파일명만 추출해서 해시 키로 사용
-    const pageKey = dest.split('/').pop();
-    const correctHash = HASHED_PASSWORDS[pageKey] || HASHED_PASSWORDS["default"];
+    // 해시 키는 파일명 기준으로 찾고, 없으면 default 사용
+    const correctHash = HASHED_PASSWORDS[destFileName] || HASHED_PASSWORDS["default"];
 
     let attempts = 0;
     const MAX = 5;
@@ -257,17 +262,13 @@
     const lockIcon = document.getElementById('lockIcon');
     const attCount = document.getElementById('attemptCount');
 
-    // sessionStorage에 목적지가 없으면 (직접 접근 시) 메인으로 돌려보내기
-    if (!sessionStorage.getItem('lockDest')) {
-      window.location.href = 'index.html';
-    }
-
     togglePw.addEventListener('click', () => {
       const isText = pwInput.type === 'text';
       pwInput.type = isText ? 'password' : 'text';
       togglePw.textContent = isText ? '👁' : '🙈';
     });
 
+    // SHA-256 해시 함수 (브라우저 내장 Web Crypto API)
     async function sha256(message) {
       const msgBuffer = new TextEncoder().encode(message);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -292,9 +293,7 @@
         lockIcon.textContent = '🔓';
         lockIcon.classList.add('unlocked');
         document.getElementById('enterBtn').textContent = '✓ 입장 중...';
-
-        // ★ 성공 시 sessionStorage 정리 후 이동
-        sessionStorage.removeItem('lockDest');
+        // dest 경로 그대로 + .html 붙여서 이동
         setTimeout(() => { window.location.href = dest + '.html'; }, 700);
       } else {
         card.classList.remove('shake');
