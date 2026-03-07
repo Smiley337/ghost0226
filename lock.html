@@ -237,13 +237,14 @@
     // =============================================
     const HASHED_PASSWORDS = {
       "default":   "c07513328104b15e2b3be00a018a690231b1fdf8fa441b5103182b3d8199aa55",
+      "k9mx2ptf": "90fade6fb78eaa0e6a7ca3cbe357fc645498c39e1207dbb915bd6aeddcdb4e15",
       // "submenu01": "해시값",
     };
     // =============================================
 
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('d') || '';
-    const dest = encoded ? atob(encoded) : 'index';  // base64 디코딩
+    const dest = encoded ? atob(encoded) : (params.get('dest') || 'index'); // base64 디코딩
 
     // destLabel에 표시 (파일명 부분만)
     const destFileName = dest.split('/').pop();

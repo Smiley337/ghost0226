@@ -48,7 +48,7 @@ $(document).ready(function(){
       const destPath = folder ? folder + '/' + pageName : pageName;
 
       // lock.html로 이동하면서 dest 전달 (확장자 없이)
-      window.location.href = "lock.html?dest=" + destPath;
+      window.location.href = "lock.html?d=" + btoa(destPath);
     } else {
       // 잠금 불필요 → 바로 이동
       window.location.href = href;
