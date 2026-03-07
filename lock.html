@@ -247,7 +247,7 @@
 
     // destLabel에 표시 (파일명 부분만)
     const destFileName = dest.split('/').pop();
-    document.getElementById('destLabel').textContent = destFileName + '.html';
+    //document.getElementById('destLabel').textContent = destFileName + '.html';
 
     // 해시 키는 파일명 기준으로 찾고, 없으면 default 사용
     const correctHash = HASHED_PASSWORDS[destFileName] || HASHED_PASSWORDS["default"];
