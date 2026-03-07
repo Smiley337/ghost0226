@@ -242,8 +242,8 @@
     // =============================================
 
     const params = new URLSearchParams(window.location.search);
-    // dest 파라미터 예: "menu5/k9mx2ptf"  (확장자 없음)
-    const dest = params.get('dest') || 'index';
+    const encoded = params.get('d') || '';
+    const dest = encoded ? atob(encoded) : 'index';  // base64 디코딩
 
     // destLabel에 표시 (파일명 부분만)
     const destFileName = dest.split('/').pop();

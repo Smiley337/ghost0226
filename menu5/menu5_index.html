@@ -344,8 +344,8 @@
   <script>
     // ★ sessionStorage에 목적지 저장 후 lock.html로 이동
     function goLock(dest) {
-      sessionStorage.setItem('lockDest', dest);
-      window.location.href = '../lock.html';
+      const encoded = btoa(dest);  // base64 인코딩
+      window.location.href = '../lock.html?d=' + encoded;
     }
   </script>
 </body>
