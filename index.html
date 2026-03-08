@@ -3,838 +3,311 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SMILEY337</title>
+  <title>Smiley337</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --sky1:    #4a9fd4;
-      --sky2:    #7ec8e3;
-      --sky3:    #b8dff0;
-      --hill1:   #5aad3a;
-      --hill2:   #7cc94f;
-      --hill3:   #a8d87a;
-      --win-bg:  #ece9d8;
-      --win-dark:#d4d0c8;
-      --win-blue:#0a246a;
-      --win-bar: linear-gradient(180deg,#2b5fce,#1a3fad 40%,#1a3fad 60%,#2b5fce);
-      --text:    #1a1a2e;
-      --muted:   #666688;
-      --border-l:#ffffff;
-      --border-d:#808080;
-      --border-dd:#404040;
-      --xp-green:#3a8c2a;
-      --xp-blue: #1a5fa8;
-    }
-
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-    body {
-      font-family: 'Press Start 2P', monospace;
-      overflow: hidden;
-      min-height: 100vh;
-      cursor: default;
-    }
-
-    /* ══════════════════════════════
-       바탕화면
-    ══════════════════════════════ */
-    #desktop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 40px;
-      overflow: hidden;
-      background-image: url('Background.png');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
-    /* ── 바탕화면 아이콘 ── */
-    .desktop-icons {
-      position: absolute;
-      top: 16px; left: 16px;
-      display: flex; flex-direction: column; gap: 6px;
-      z-index: 10;
-    }
-
-    .desk-icon {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 4px; padding: 6px; width: 72px;
-      cursor: default; border: 1px solid transparent;
-      border-radius: 2px;
-    }
-    .desk-icon:hover {
-      background: rgba(10, 36, 106, 0.15);
-      border-color: rgba(10, 36, 106, 0.4);
-    }
-    .desk-icon:active { background: rgba(10,36,106,0.25); }
-    .desk-icon .d-icon { font-size: 28px; display: block; }
-    .desk-icon .d-label {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 4px; color: #fff;
-      text-align: center; line-height: 1.8;
-      text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
-      word-break: break-all;
-    }
-
-    /* ══════════════════════════════
-       창 (Window) — Windows XP 스타일
-    ══════════════════════════════ */
-    .window {
-      position: absolute;
-      background: var(--win-bg);
-      border: 1px solid #404040;
-      border-radius: 6px 6px 0 0;
-      overflow: hidden;
-      min-width: 280px;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.5);
-    }
-    .window.focused {
-      box-shadow: 3px 3px 12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.6);
-    }
-
-    /* XP 타이틀바 — 특유의 파란 그라데이션 */
-    .win-titlebar {
-      height: 28px;
-      background: linear-gradient(180deg,
-        #2b6fd4 0%, #1a5fc4 8%,
-        #1a4faa 50%, #1a3f9a 92%,
-        #1a2f8a 100%
-      );
-      border-radius: 5px 5px 0 0;
-      display: flex; align-items: center;
-      padding: 0 4px 0 6px; gap: 4px;
-      cursor: move; user-select: none;
-      position: relative;
-    }
-    /* XP 타이틀바 상단 하이라이트 */
-    .win-titlebar::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%);
-      border-radius: 5px 5px 0 0;
-      pointer-events: none;
-    }
-    .window.focused .win-titlebar {
-      background: linear-gradient(180deg,
-        #2b6fd4 0%, #1e5ec8 8%,
-        #1a50b8 50%, #1a40a8 92%,
-        #0a2888 100%
-      );
-    }
-    .window:not(.focused) .win-titlebar {
-      background: linear-gradient(180deg, #9090a8 0%, #787888 50%, #686878 100%);
-    }
-
-    .win-icon-sm { font-size: 14px; flex-shrink: 0; }
-    .win-title-text {
-      flex: 1;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px; color: #fff;
-      letter-spacing: 0.5px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      pointer-events: none;
-    }
-
-    /* XP 창 버튼 — 동그란 스타일 */
-    .win-btns { display: flex; gap: 2px; flex-shrink: 0; }
-    .win-btn {
-      width: 20px; height: 18px;
-      border: 1px solid rgba(0,0,0,0.3);
-      border-radius: 3px;
-      font-size: 9px; font-weight: bold;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-family: Arial, sans-serif;
-      position: relative;
-    }
-    .btn-min, .btn-max {
-      background: linear-gradient(180deg, #4a8fe0 0%, #2a5fc0 50%, #1a4fb0 100%);
-      color: #fff;
-    }
-    .btn-close {
-      background: linear-gradient(180deg, #e05050 0%, #c03030 50%, #a02020 100%);
-      color: #fff;
-    }
-    .win-btn:hover { filter: brightness(1.2); }
-    .win-btn:active { filter: brightness(0.9); }
-
-    /* XP 메뉴바 */
-    .win-menubar {
-      background: var(--win-bg);
-      border-bottom: 1px solid #b0b0b0;
-      padding: 0 4px; display: flex; height: 18px; align-items: center;
-    }
-    .win-menubar span {
-      font-family: 'VT323', monospace;
-      font-size: 14px; color: #1a1a1a;
-      padding: 0 6px; height: 100%;
-      display: flex; align-items: center; cursor: default;
-    }
-    .win-menubar span:hover { background: var(--xp-blue); color: #fff; }
-
-    /* XP 툴바 */
-    .win-toolbar {
-      background: linear-gradient(180deg, #e8e4d8, #d8d4c8);
-      border-bottom: 1px solid #b0b0b0;
-      padding: 3px 6px; display: flex; align-items: center; gap: 4px;
-    }
-    .tb-btn {
-      font-family: 'VT323', monospace; font-size: 13px;
-      background: linear-gradient(180deg, #f0ece0, #d8d4c8);
-      border: 1px solid; border-top-color: #fff; border-left-color: #fff;
-      border-right-color: #808080; border-bottom-color: #808080;
-      padding: 1px 6px; cursor: default; color: #1a1a1a;
-    }
-    .tb-btn:hover { background: linear-gradient(180deg, #faf6ea, #e8e4d8); }
-    .tb-btn:active { border-top-color: #808080; border-left-color: #808080; border-right-color: #fff; border-bottom-color: #fff; }
-
-    /* 주소창 */
-    .win-addressbar {
-      background: var(--win-dark);
-      border-bottom: 1px solid #b0b0b0;
-      padding: 2px 6px; display: flex; align-items: center; gap: 6px;
-    }
-    .addr-label { font-family: 'VT323', monospace; font-size: 13px; color: #333; flex-shrink: 0; }
-    .addr-input {
-      flex: 1; background: #fff;
-      border: 1px solid; border-top-color: #808080; border-left-color: #808080;
-      border-right-color: #fff; border-bottom-color: #fff;
-      font-family: 'VT323', monospace; font-size: 13px; color: #1a1a1a;
-      padding: 1px 4px; outline: none;
-    }
-
-    /* 창 본문 */
-    .win-body { overflow-y: auto; overflow-x: hidden; background: #fff; }
-    .win-body::-webkit-scrollbar { width: 16px; }
-    .win-body::-webkit-scrollbar-track {
-      background: var(--win-dark);
-      border-left: 1px solid #808080;
-    }
-    .win-body::-webkit-scrollbar-thumb {
-      background: linear-gradient(90deg, #e0dcd0, #c8c4b8);
-      border: 1px solid; border-top-color: #fff; border-left-color: #fff;
-      border-right-color: #808080; border-bottom-color: #808080;
-    }
-
-    /* 상태바 */
-    .win-statusbar {
-      background: var(--win-dark);
-      border-top: 1px solid #808080;
-      padding: 2px 6px; display: flex; gap: 1px;
-    }
-    .win-statusbar span {
-      font-family: 'VT323', monospace; font-size: 13px; color: #333;
-      border-right: 1px solid #808080; padding-right: 8px; padding-left: 2px;
-    }
-    .win-statusbar span:last-child { border-right: none; }
-
-    /* ══ WELCOME 창 ══ */
-    #win-welcome { width: 400px; top: 50px; left: 110px; }
-
-    .welcome-body {
-      padding: 20px 16px; text-align: center;
-      background: linear-gradient(180deg, #eef6ff 0%, #fff 60%);
-    }
-    .welcome-tag {
-      font-size: 6px; color: var(--xp-blue);
-      letter-spacing: 2px; margin-bottom: 12px;
-    }
-    .welcome-title {
-      font-size: clamp(22px, 4vw, 34px);
-      color: var(--xp-blue); line-height: 1.5;
-      text-shadow: 2px 2px 0 rgba(0,80,180,0.2);
-      margin-bottom: 6px;
-    }
-    .welcome-title span { color: var(--xp-green); }
-    .welcome-sub {
-      font-family: 'VT323', monospace;
-      font-size: 20px; color: #5580bb;
-      letter-spacing: 2px; min-height: 26px; margin-bottom: 18px;
-    }
-    .welcome-sub::after { content: '_'; animation: blink 1s step-end infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    .welcome-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-    .xp-btn {
-      font-family: 'Press Start 2P', monospace; font-size: 6px;
-      padding: 6px 10px; cursor: pointer; color: #1a1a1a;
-      background: linear-gradient(180deg, #f0ece0 0%, #d8d4c8 100%);
-      border: 1px solid; border-top-color: #fff; border-left-color: #fff;
-      border-right-color: #707070; border-bottom-color: #707070;
-      outline: 1px solid #404040;
-    }
-    .xp-btn:hover { background: linear-gradient(180deg, #faf6ea 0%, #e8e4d8 100%); }
-    .xp-btn:active {
-      border-top-color: #707070; border-left-color: #707070;
-      border-right-color: #fff; border-bottom-color: #fff;
-    }
-
-    /* ══ EXPLORE 창 ══ */
-    #win-explore { width: 520px; top: 70px; left: 520px; }
-    .explorer-layout { display: flex; height: 300px; }
-
-    .explorer-tree {
-      width: 150px; background: #f0ece0;
-      border-right: 1px solid #b0b0b0;
-      padding: 4px 0; overflow-y: auto; flex-shrink: 0;
-    }
-    .explorer-tree::-webkit-scrollbar { width: 16px; }
-    .explorer-tree::-webkit-scrollbar-track { background: var(--win-dark); }
-    .explorer-tree::-webkit-scrollbar-thumb { background: linear-gradient(90deg,#e0dcd0,#c8c4b8); border:1px solid #888; }
-
-    .tree-section-title {
-      font-family: 'VT323', monospace; font-size: 12px;
-      color: var(--xp-blue); padding: 6px 8px 2px;
-      font-weight: bold; letter-spacing: 0.5px;
-    }
-    .tree-item {
-      font-family: 'VT323', monospace;
-      font-size: 14px; color: #1a1a1a;
-      padding: 2px 8px; cursor: default;
-      display: flex; align-items: center; gap: 4px; white-space: nowrap;
-    }
-    .tree-item:hover { background: #cce0ff; }
-    .tree-item.active { background: #3a6bbd; color: #fff; }
-    .tree-icon { font-size: 11px; }
-    .tree-child { padding-left: 20px !important; }
-    .tree-sub { display: block; }
-
-    .explorer-content { flex: 1; overflow-y: auto; padding: 8px; background: #fff; }
-    .explorer-content::-webkit-scrollbar { width: 16px; }
-    .explorer-content::-webkit-scrollbar-track { background: var(--win-dark); }
-    .explorer-content::-webkit-scrollbar-thumb { background: linear-gradient(90deg,#e0dcd0,#c8c4b8); border:1px solid #888; }
-
-    .file-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-      gap: 2px;
-    }
-    .file-item {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 8px 4px; cursor: default;
-      border: 1px solid transparent; text-decoration: none; overflow: hidden;
-    }
-    .file-item:hover { background: #cce0ff; border-color: #6699cc; }
-    .file-item.selected { background: #3a6bbd; border-color: #1a4baa; }
-    .file-item .fi-icon { font-size: 26px; display: block; }
-    .file-item .fi-name {
-      font-family: 'VT323', monospace; font-size: 13px;
-      color: #1a1a1a; text-align: center; line-height: 1.3; word-break: break-all;
-    }
-    .file-item:hover .fi-name, .file-item.selected .fi-name { color: #fff; }
-
-    /* ══ CHARACTERS 창 ══ */
-    #win-chars { width: 340px; top: 280px; left: 110px; }
-    .char-grid {
-      display: grid; grid-template-columns: repeat(3,1fr);
-      gap: 1px; background: #b0b0b0;
-      padding: 8px; background: #fff;
-    }
-    .char-cell {
-      background: #f8f4e8; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 4px; padding: 12px 6px; cursor: default;
-      text-decoration: none; border: 1px solid #d0ccc0;
-    }
-    .char-cell:hover { background: #cce0ff; border-color: #6699cc; }
-    .char-cell .cc-icon { font-size: 24px; }
-    .char-cell .cc-name {
-      font-family: 'VT323', monospace; font-size: 13px;
-      color: #1a1a1a; letter-spacing: 0.5px;
-    }
-    .char-cell .cc-status { font-family: 'VT323', monospace; font-size: 11px; color: #888; }
-    .char-cell.mystery { background: #f0e8f8; border-color: #c0a0d0; }
-    .char-cell.mystery:hover { background: #e0ccf0; }
-    .char-cell.mystery .cc-name { color: #8844aa; }
-
-    /* ══ 작업표시줄 — XP 스타일 ══ */
-    #taskbar {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
-      background: linear-gradient(180deg,
-        #245edc 0%, #1a4ec8 8%,
-        #1a42b8 50%, #1a36a8 92%, #1a2a88 100%
-      );
-      border-top: 2px solid #1a6adc;
-      display: flex; align-items: center;
-      padding: 0 4px; gap: 4px;
-      z-index: 99990;
-    }
-    /* XP 태스크바 상단 하이라이트 */
-    #taskbar::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
-      pointer-events: none;
-    }
-
-    /* XP 시작 버튼 — 초록 + 둥근 모서리 */
-    #start-btn {
-      font-family: 'Press Start 2P', monospace; font-size: 7px;
-      color: #fff;
-      background: linear-gradient(180deg, #6ac844 0%, #4ab030 40%, #3a9820 92%, #2a8010 100%);
-      border: 1px solid #1a6010;
-      border-radius: 10px;
-      padding: 5px 14px 5px 10px;
-      cursor: pointer; letter-spacing: 1px;
-      display: flex; align-items: center; gap: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-      white-space: nowrap;
-    }
-    #start-btn:hover { filter: brightness(1.1); }
-    #start-btn:active { filter: brightness(0.9); transform: translateY(1px); }
-    .sb-logo { font-size: 16px; }
-
-    .tb-sep {
-      width: 1px; height: 28px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-      flex-shrink: 0;
-    }
-
-    /* XP 태스크바 창 버튼 */
-    .tb-win-btn {
-      font-family: 'Press Start 2P', monospace; font-size: 5px;
-      color: #fff;
-      background: linear-gradient(180deg, #3a72d8 0%, #1a52b8 50%, #1a42a8 100%);
-      border: 1px solid #0a2888;
-      border-radius: 3px;
-      padding: 4px 8px; cursor: pointer;
-      display: flex; align-items: center; gap: 5px;
-      letter-spacing: 0.5px; white-space: nowrap; min-width: 80px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
-    }
-    .tb-win-btn:hover { background: linear-gradient(180deg, #4a82e8 0%, #2a62c8 50%, #1a52b8 100%); }
-    .tb-win-btn.active {
-      background: linear-gradient(180deg, #1a42a8 0%, #2a52b8 50%, #3a62c8 100%);
-      border-color: #0a1868;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-    }
-    .tb-win-btn .tbw-icon { font-size: 12px; }
-
-    /* 시스템 트레이 */
-    .sys-tray {
-      margin-left: auto;
-      display: flex; align-items: center; gap: 8px;
-      background: linear-gradient(180deg, #1a52cc 0%, #1a3eaa 50%, #1a2e9a 100%);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 3px;
-      padding: 3px 10px; height: 30px;
-    }
-    #bgm-tray { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-    .bgm-bars-tb { display: flex; gap: 2px; align-items: flex-end; height: 12px; }
-    .bgm-bars-tb span {
-      width: 2px; background: #aaddff;
-      animation: barwave 0.8s ease-in-out infinite alternate;
-    }
-    .bgm-bars-tb span:nth-child(1){height:4px;animation-delay:0s;}
-    .bgm-bars-tb span:nth-child(2){height:9px;animation-delay:0.12s;}
-    .bgm-bars-tb span:nth-child(3){height:5px;animation-delay:0.24s;}
-    .bgm-bars-tb span:nth-child(4){height:10px;animation-delay:0.08s;}
-    .bgm-bars-tb span:nth-child(5){height:6px;animation-delay:0.2s;}
-    @keyframes barwave { from{transform:scaleY(0.3);opacity:0.5;} to{transform:scaleY(1);opacity:1;} }
-    .bgm-bars-tb.paused span { animation-play-state: paused; }
-
-    #tb-clock { font-family: 'Press Start 2P', monospace; font-size: 6px; color: #fff; text-align: right; letter-spacing: 1px; }
-    #tb-date  { font-size: 5px; color: rgba(255,255,255,0.7); margin-top: 2px; letter-spacing: 1px; }
-
-    /* ══ 시작 메뉴 — XP 스타일 ══ */
-    #start-menu {
-      position: fixed; bottom: 42px; left: 4px;
-      width: 240px;
-      background: var(--win-bg);
-      border: 1px solid #808080;
-      border-radius: 6px 6px 0 0;
-      box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
-      z-index: 99995; display: none;
-      overflow: hidden;
-    }
-    #start-menu.open { display: block; }
-
-    .sm-header {
-      background: linear-gradient(90deg, #1a52cc, #2a72dc);
-      padding: 10px 12px; display: flex; align-items: center; gap: 10px;
-    }
-    .sm-avatar { font-size: 28px; }
-    .sm-user { font-size: 7px; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-    .sm-sub  { font-family: 'VT323', monospace; font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 2px; }
-
-    .sm-body { display: flex; }
-    .sm-left {
-      flex: 1; background: #fff;
-      border-right: 1px solid #d0d0d0; padding: 4px 0;
-    }
-    .sm-right {
-      width: 100px; background: #d8e8f8; padding: 4px 0;
-    }
-
-    .sm-item {
-      font-family: 'VT323', monospace; font-size: 14px; color: #1a1a1a;
-      padding: 5px 10px; cursor: default;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .sm-item:hover { background: #3a6bbd; color: #fff; }
-    .sm-item .sm-icon { font-size: 14px; }
-    .sm-divider { height: 1px; background: #c0c0c0; margin: 3px 6px; }
-
-    .sm-footer {
-      background: linear-gradient(90deg, #1a52cc, #2a72dc);
-      padding: 4px 10px; display: flex; justify-content: flex-end; gap: 6px;
-    }
-    .sm-footer-btn {
-      font-family: 'VT323', monospace; font-size: 12px; color: #fff;
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 3px; padding: 2px 8px; cursor: pointer;
-    }
-    .sm-footer-btn:hover { background: rgba(255,255,255,0.25); }
-
-    /* ══ 부팅 스플래시 — XP 스타일 ══ */
-    #boot-splash {
-      position: fixed; inset: 0;
-      background: #000;
-      z-index: 99999;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 24px;
-      animation: bootfade 0.5s ease 2.8s forwards;
-    }
-    @keyframes bootfade { to { opacity: 0; pointer-events: none; } }
-
-    .boot-logo {
-      font-size: clamp(20px, 4vw, 40px); color: #fff;
-      text-shadow: 0 0 30px #4a9fd4, 0 0 60px #2a6fa4;
-      animation: logopulse 0.8s ease infinite alternate;
-    }
-    @keyframes logopulse {
-      from { text-shadow: 0 0 20px #4a9fd4; }
-      to   { text-shadow: 0 0 40px #4a9fd4, 0 0 80px #3aad5a; }
-    }
-    .boot-logo span { color: #6ac844; }
-    .boot-sub { font-family: 'VT323', monospace; font-size: 18px; color: #888; letter-spacing: 4px; }
-
-    /* XP 프로그레스바 */
-    .boot-progress-wrap {
-      width: 280px; background: #1a1a1a;
-      border: 1px solid #444; border-radius: 2px; padding: 2px;
-    }
-    .boot-progress-inner { height: 12px; overflow: hidden; display: flex; gap: 2px; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- ── 부팅 ── -->
-<div id="boot-splash">
-  <div class="boot-logo">SMILEY<span>337</span></div>
-  <div class="boot-sub">LOADING...</div>
-  <div class="boot-progress-wrap">
-    <div class="boot-progress-inner" id="bootBlocks"></div>
-  </div>
-</div>
+  <audio id="bgm" loop>
+    <source src="StarAndChill.wav" type="audio/mpeg">
+  </audio>
 
-<audio id="bgm" loop><source src="StarAndChill.wav" type="audio/mpeg"></audio>
-
-<!-- ══ 바탕화면 ══ -->
-<div id="desktop">
-  <!-- 바탕화면 아이콘 -->
-  <div class="desktop-icons">
-    <div class="desk-icon" ondblclick="openWin('win-welcome')">
-      <span class="d-icon">🖥️</span><span class="d-label">WELCOME<br>.EXE</span>
-    </div>
-    <div class="desk-icon" ondblclick="openWin('win-explore')">
-      <span class="d-icon">📁</span><span class="d-label">EXPLORE<br>.EXE</span>
-    </div>
-    <div class="desk-icon" ondblclick="window.location='menu5/menu5_index.html'">
-      <span class="d-icon">👽</span><span class="d-label">CHARS<br>.EXE</span>
-    </div>
-    <div class="desk-icon" ondblclick="alert('🚧 COMING SOON')">
-      <span class="d-icon">⭐</span><span class="d-label">MENU4<br>.EXE</span>
-    </div>
-    <div class="desk-icon" ondblclick="alert('❓ ???')">
-      <span class="d-icon">👾</span><span class="d-label">???<br>.EXE</span>
+  <!-- BGM 컨트롤 버튼 -->
+  <div class="bgm-player" id="bgmBtn">
+    <span class="bgm-icon">♪</span>
+    <span class="bgm-label">BGM</span>
+    <div class="bgm-bar" id="bgmBar">
+      <span></span><span></span><span></span><span></span><span></span>
     </div>
   </div>
 
-  <!-- ══ WELCOME 창 ══ -->
-  <div class="window" id="win-welcome">
-    <div class="win-titlebar" id="tb-win-welcome">
-      <span class="win-icon-sm">🖥️</span>
-      <span class="win-title-text">WELCOME — SMILEY337</span>
-      <div class="win-btns">
-        <button class="win-btn btn-min" onclick="minWin('win-welcome')">─</button>
-        <button class="win-btn btn-max">□</button>
-        <button class="win-btn btn-close" onclick="closeWin('win-welcome')">✕</button>
-      </div>
+  <!-- 햄버거 버튼 -->
+  <div class="menu-toggle" id="menuToggle">☰</div>
+
+  <!-- 사이드바 -->
+  <nav id="mainNav">
+    <div class="nav-inner">
+      <div class="nav-title">// NAVIGATE</div>
+      <ul class="MenuBar">
+        <li>
+          <a href="#">메뉴1</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU2</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU3</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU4</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#">MENU5</a>
+          <ul class="SubMenu">
+            <li><a href="menu5/k9mx2ptf.html">AVO</a></li>
+            <li><a href="menu5/r4nw7qvb.html">ALIEN</a></li>
+            <li><a href="menu5/j6tz3yhs.html">URAANG</a></li>
+            <li><a href="menu5/w8ck5dxe.html">LOOPY</a></li>
+            <li><a href="menu5/b2fg9urn.html">???</a></li>
+          </ul>
+        </li>
+      </ul>
     </div>
-    <div class="win-menubar">
-      <span>File</span><span>View</span><span>Help</span>
-    </div>
-    <div class="win-body" style="max-height:260px;">
-      <div class="welcome-body">
-        <div class="welcome-tag">// WELCOME TO</div>
-        <h1 class="welcome-title">SMILEY<span>337</span></h1>
-        <p class="welcome-sub" id="alienText"></p>
-        <div class="welcome-btns">
-          <button class="xp-btn" onclick="openWin('win-explore')">📁 EXPLORE</button>
-          <button class="xp-btn" onclick="window.location='menu5/menu5_index.html'">👽 CHARS</button>
-          <button class="xp-btn" onclick="alert('🚧 COMING SOON')">⭐ MORE</button>
+  </nav>
+
+  <div class="MainContainer" id="mainContainer">
+    <div class="ContentWrap">
+
+      <!-- ── 히어로 섹션 ── -->
+      <section class="hero">
+        <canvas id="starCanvas"></canvas>
+        <div class="hero-glow"></div>
+        <div class="hero-content">
+          <div class="hero-tag">// WELCOME TO</div>
+          <h1 class="hero-title">SMILEY<span>337</span></h1>
+          <p class="hero-sub" id="alienText"></p>
+          <p class="hero-scroll">▼ SCROLL DOWN ▼</p>
         </div>
-      </div>
-    </div>
-    <div class="win-statusbar">
-      <span>SIGNAL: RECEIVED</span><span>STATUS: ONLINE</span>
-    </div>
-  </div>
+      </section>
 
-  <!-- ══ EXPLORE 창 ══ -->
-  <div class="window" id="win-explore" style="display:none;">
-    <div class="win-titlebar" id="tb-win-explore">
-      <span class="win-icon-sm">📁</span>
-      <span class="win-title-text">EXPLORE — SMILEY337</span>
-      <div class="win-btns">
-        <button class="win-btn btn-min" onclick="minWin('win-explore')">─</button>
-        <button class="win-btn btn-max">□</button>
-        <button class="win-btn btn-close" onclick="closeWin('win-explore')">✕</button>
-      </div>
-    </div>
-    <div class="win-menubar">
-      <span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Help</span>
-    </div>
-    <div class="win-toolbar">
-      <button class="tb-btn">← Back</button>
-      <button class="tb-btn">→ Forward</button>
-      <button class="tb-btn">↑ Up</button>
-    </div>
-    <div class="win-addressbar">
-      <span class="addr-label">Address:</span>
-      <input class="addr-input" id="explorer-addr" value="C:\SMILEY337\" readonly>
-    </div>
-    <div class="explorer-layout">
-      <div class="explorer-tree">
-        <div class="tree-section-title">Folders</div>
-        <div class="tree-item" onclick="treeToggle(this)"><span class="tree-icon">🖥️</span><span>My Computer</span></div>
-        <div class="tree-item active" onclick="treeToggle(this)"><span class="tree-icon">📁</span><span>SMILEY337</span></div>
-        <div class="tree-sub" id="tree-smiley">
-          <div class="tree-item tree-child" onclick="loadFolder('menu1',this)"><span class="tree-icon">📂</span><span>MENU1</span></div>
-          <div class="tree-item tree-child" onclick="loadFolder('menu2',this)"><span class="tree-icon">📂</span><span>MENU2</span></div>
-          <div class="tree-item tree-child" onclick="loadFolder('menu3',this)"><span class="tree-icon">📂</span><span>MENU3</span></div>
-          <div class="tree-item tree-child" onclick="loadFolder('menu4',this)"><span class="tree-icon">📂</span><span>MENU4</span></div>
-          <div class="tree-item tree-child" onclick="window.location='menu5/menu5_index.html'"><span class="tree-icon">🔒</span><span>CHARS</span></div>
+      <hr class="pixel-divider">
+
+      <!-- ── 메뉴 카드 섹션 ── -->
+      <section class="section">
+        <div class="section-label reveal">// MENU SELECT</div>
+        <h2 class="section-title reveal reveal-delay-1">EXPLORE</h2>
+
+        <div class="menu-grid">
+          <a href="#" class="menu-card reveal reveal-delay-1">
+            <span class="menu-card-icon">🌐</span>
+            <span class="menu-card-num">01 //</span>
+            <div class="menu-card-title">메뉴1</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-2">
+            <span class="menu-card-icon">🪐</span>
+            <span class="menu-card-num">02 //</span>
+            <div class="menu-card-title">MENU2</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-3">
+            <span class="menu-card-icon">🛸</span>
+            <span class="menu-card-num">03 //</span>
+            <div class="menu-card-title">MENU3</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="#" class="menu-card reveal reveal-delay-4">
+            <span class="menu-card-icon">⭐</span>
+            <span class="menu-card-num">04 //</span>
+            <div class="menu-card-title">MENU4</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+          <a href="lock.html?dest=menu5/k9mx2ptf" class="menu-card reveal reveal-delay-5">
+            <span class="menu-card-icon">👽</span>
+            <span class="menu-card-num">05 //</span>
+            <div class="menu-card-title">CHARACTERS</div>
+            <div class="menu-card-desc">🔒 RESTRICTED</div>
+            <span class="menu-card-lock">🔒</span>
+          </a>
+          <a href="#" class="menu-card mystery reveal reveal-delay-5">
+            <span class="menu-card-icon">👾</span>
+            <span class="menu-card-num">?? //</span>
+            <div class="menu-card-title">???</div>
+            <div class="menu-card-desc">_ _ _ _ _ _</div>
+          </a>
         </div>
-      </div>
-      <div class="explorer-content" id="explorer-content">
-        <div class="file-grid" id="file-grid-main">
-          <a href="#" class="file-item"><span class="fi-icon">🌐</span><span class="fi-name">메뉴1</span></a>
-          <a href="#" class="file-item"><span class="fi-icon">🪐</span><span class="fi-name">MENU2</span></a>
-          <a href="#" class="file-item"><span class="fi-icon">🛸</span><span class="fi-name">MENU3</span></a>
-          <a href="#" class="file-item"><span class="fi-icon">⭐</span><span class="fi-name">MENU4</span></a>
-          <a href="menu5/menu5_index.html" class="file-item"><span class="fi-icon">🔒</span><span class="fi-name">CHARS</span></a>
-          <a href="#" class="file-item" onclick="alert('❓');return false;"><span class="fi-icon">👾</span><span class="fi-name">???</span></a>
-        </div>
-      </div>
-    </div>
-    <div class="win-statusbar">
-      <span>6 objects</span><span>C:\SMILEY337\</span>
+      </section>
+
+      <hr class="pixel-divider">
+
+      <!-- ── 푸터 ── -->
+      <footer>
+        <p>SMILEY337</p>
+        <p>© <span id="year"></span> Smiley337. All rights reserved.</p>
+        <p>Hosted with GitHub Pages.</p>
+      </footer>
+
     </div>
   </div>
 
-</div><!-- /#desktop -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    // ── 별 파티클 (Canvas) ──
+    const canvas = document.getElementById('starCanvas');
+    const ctx = canvas.getContext('2d');
 
-<!-- ══ 작업표시줄 ══ -->
-<div id="taskbar">
-  <button id="start-btn" onclick="toggleStart()">
-    <span class="sb-logo">🪟</span> start
-  </button>
-  <div class="tb-sep"></div>
-  <button class="tb-win-btn active" id="tbw-welcome" onclick="toggleWin('win-welcome')">
-    <span class="tbw-icon">🖥️</span> WELCOME
-  </button>
-  <button class="tb-win-btn" id="tbw-explore" onclick="toggleWin('win-explore')">
-    <span class="tbw-icon">📁</span> EXPLORE
-  </button>
-  <button class="tb-win-btn" id="tbw-chars" onclick="window.location='menu5/menu5_index.html'">
-    <span class="tbw-icon">👽</span> CHARS
-  </button>
-  <div class="sys-tray">
-    <div id="bgm-tray" onclick="toggleBGM()">
-      <div class="bgm-bars-tb" id="bgmBars">
-        <span></span><span></span><span></span><span></span><span></span>
-      </div>
-    </div>
-    <div>
-      <div id="tb-clock">--:--</div>
-      <div id="tb-date">--.--.--</div>
-    </div>
-  </div>
-</div>
+    function resizeCanvas() {
+      canvas.width  = canvas.parentElement.offsetWidth;
+      canvas.height = canvas.parentElement.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-<!-- ══ 시작 메뉴 ══ -->
-<div id="start-menu">
-  <div class="sm-header">
-    <span class="sm-avatar">✦</span>
-    <div>
-      <div class="sm-user">SMILEY337</div>
-      <div class="sm-sub">// ONLINE</div>
-    </div>
-  </div>
-  <div class="sm-body">
-    <div class="sm-left">
-      <div class="sm-item" onclick="openWin('win-welcome');toggleStart()"><span class="sm-icon">🖥️</span> WELCOME</div>
-      <div class="sm-item" onclick="openWin('win-explore');toggleStart()"><span class="sm-icon">📁</span> EXPLORE</div>
-      <div class="sm-divider"></div>
-      <div class="sm-item" onclick="window.location='menu5/menu5_index.html'"><span class="sm-icon">👽</span> CHARS</div>
-      <div class="sm-item" onclick="alert('❓ ???')"><span class="sm-icon">👾</span> ???</div>
-    </div>
-    <div class="sm-right">
-      <div class="sm-item" style="font-size:12px;color:#1a52cc;">My Computer</div>
-      <div class="sm-item" style="font-size:12px;color:#1a52cc;">My Documents</div>
-      <div class="sm-divider"></div>
-      <div class="sm-item" style="font-size:12px;color:#1a52cc;">Control Panel</div>
-    </div>
-  </div>
-  <div class="sm-footer">
-    <button class="sm-footer-btn" onclick="alert('🚧')">Log Off</button>
-    <button class="sm-footer-btn" onclick="alert('👋')">Shut Down</button>
-  </div>
-</div>
+    const stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 0.5,
+      speed: Math.random() * 0.3 + 0.05,
+      opacity: Math.random(),
+      blink: Math.random() * 0.02 + 0.005
+    }));
 
-<script>
-// ── 부팅 블록 ──
-(function(){
-  const wrap=document.getElementById('bootBlocks');
-  for(let i=0;i<10;i++){
-    const b=document.createElement('div');
-    b.style.cssText='width:20px;height:12px;background:linear-gradient(180deg,#4a9fd4,#3a8aaa);flex-shrink:0;opacity:0;border-radius:1px;';
-    setTimeout(()=>{b.style.opacity='1';},i*200);
-    wrap.appendChild(b);
-  }
-})();
+    const ufos = Array.from({ length: 2 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.5,
+      speed: Math.random() * 0.4 + 0.2,
+      dir: Math.random() > 0.5 ? 1 : -1
+    }));
 
-// ── 시계 ──
-function updateClock(){
-  const n=new Date(), pad=v=>String(v).padStart(2,'0');
-  document.getElementById('tb-clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes());
-  document.getElementById('tb-date').textContent=n.getFullYear()+'.'+pad(n.getMonth()+1)+'.'+pad(n.getDate());
-}
-updateClock(); setInterval(updateClock,1000);
+    function drawPixelUFO(x, y) {
+      const s = 4;
+      ctx.fillStyle = '#00ff88';
+      [[1,1,1],[1,1,1],[0,1,0]].forEach((row, ry) =>
+        row.forEach((cell, rx) => {
+          if (cell) ctx.fillRect(x + rx*s, y + ry*s, s, s);
+        })
+      );
+      ctx.fillStyle = '#00ccff';
+      ctx.fillRect(x + s, y - s, s, s);
+    }
 
-// ── 외계어 타이핑 ──
-const alienEl=document.getElementById('alienText');
-const finalText='SIGNAL RECEIVED ★';
-const alienChars='ᗩᗺᑕᗞᕮᖴᘜᕼᓰᒍᛕᒪᘻᑎᓍᕵᘉᖇᔕᖶᑌᐯᘺ᙭ᖻᔗ';
-let decoded=0;
-function typeAlien(){
-  let s='';
-  for(let i=0;i<finalText.length;i++)
-    s+=i<decoded?finalText[i]:alienChars[Math.floor(Math.random()*alienChars.length)];
-  alienEl.textContent=s;
-}
-setTimeout(()=>{
-  alienEl.style.opacity=1;
-  const iv=setInterval(()=>{typeAlien();if(decoded<finalText.length)decoded++;else clearInterval(iv);},100);
-},3000);
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// ── BGM ──
-const bgm=document.getElementById('bgm');
-const bars=document.getElementById('bgmBars');
-let playing=false;
-function tryPlay(){bgm.play().then(()=>{playing=true;bars.classList.remove('paused');}).catch(()=>{});}
-window.addEventListener('load',()=>setTimeout(tryPlay,2800));
-document.addEventListener('click',function fc(){if(!playing)tryPlay();document.removeEventListener('click',fc);},{once:true});
-function toggleBGM(){
-  if(playing){bgm.pause();playing=false;bars.classList.add('paused');}
-  else{bgm.play();playing=true;bars.classList.remove('paused');}
-}
+      stars.forEach(star => {
+        star.opacity += star.blink;
+        if (star.opacity > 1 || star.opacity < 0) star.blink *= -1;
+        star.y += star.speed;
+        if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
 
-// ══ 창 관리 ══
-let zTop=100;
-const winState={
-  'win-welcome':{open:true, minimized:false},
-  'win-explore':{open:false,minimized:false},
-};
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${Math.random() > 0.9 ? '0,204,255' : '0,255,136'}, ${star.opacity})`;
+        ctx.fill();
+      });
 
-function focusWin(id){
-  document.querySelectorAll('.window').forEach(w=>w.classList.remove('focused'));
-  const win=document.getElementById(id);
-  if(!win||win.style.display==='none') return;
-  win.style.zIndex=++zTop;
-  win.classList.add('focused');
-  document.querySelectorAll('.tb-win-btn').forEach(b=>b.classList.remove('active'));
-  const btn=document.getElementById('tbw-'+id.replace('win-',''));
-  if(btn) btn.classList.add('active');
-}
-function openWin(id){
-  const win=document.getElementById(id);
-  if(!win) return;
-  winState[id].open=true; winState[id].minimized=false;
-  win.style.display='block';
-  setTimeout(()=>focusWin(id),0);
-}
-function closeWin(id){
-  const win=document.getElementById(id);
-  if(!win) return;
-  winState[id].open=false; win.style.display='none';
-  document.querySelectorAll('.tb-win-btn').forEach(b=>b.classList.remove('active'));
-}
-function minWin(id){
-  const win=document.getElementById(id);
-  if(!win) return;
-  winState[id].minimized=true; win.style.display='none';
-  document.querySelectorAll('.tb-win-btn').forEach(b=>b.classList.remove('active'));
-}
-function toggleWin(id){
-  const win=document.getElementById(id);
-  if(!win) return;
-  const s=winState[id];
-  if(!s.open||s.minimized){ s.minimized=false; s.open=true; win.style.display='block'; setTimeout(()=>focusWin(id),0); }
-  else if(win.classList.contains('focused')){ minWin(id); }
-  else { focusWin(id); }
-}
-document.querySelectorAll('.window').forEach(win=>{
-  win.addEventListener('mousedown',()=>focusWin(win.id));
-});
+      ufos.forEach(ufo => {
+        ufo.x += ufo.speed * ufo.dir;
+        if (ufo.x > canvas.width + 20) ufo.x = -20;
+        if (ufo.x < -20) ufo.x = canvas.width + 20;
+        drawPixelUFO(ufo.x, ufo.y);
+      });
 
-// ── 드래그 ──
-document.querySelectorAll('.win-titlebar').forEach(tb=>{
-  let ox,oy,dragging=false;
-  tb.addEventListener('mousedown',e=>{
-    if(e.target.classList.contains('win-btn')) return;
-    dragging=true;
-    const win=tb.closest('.window');
-    focusWin(win.id);
-    const rect=win.getBoundingClientRect();
-    ox=e.clientX-rect.left; oy=e.clientY-rect.top;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove',e=>{
-    if(!dragging) return;
-    const win=tb.closest('.window');
-    let nx=Math.max(0,Math.min(e.clientX-ox,window.innerWidth-win.offsetWidth));
-    let ny=Math.max(0,Math.min(e.clientY-oy,window.innerHeight-40-win.offsetHeight));
-    win.style.left=nx+'px'; win.style.top=ny+'px';
-    win.style.right='auto'; win.style.bottom='auto';
-  });
-  document.addEventListener('mouseup',()=>{dragging=false;});
-});
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
 
-// ── 시작 메뉴 ──
-function toggleStart(){
-  document.getElementById('start-menu').classList.toggle('open');
-}
-document.addEventListener('click',e=>{
-  if(!e.target.closest('#start-menu')&&!e.target.closest('#start-btn'))
-    document.getElementById('start-menu').classList.remove('open');
-});
+    // ── 외계어 타이핑 효과 ──
+    const alienEl = document.getElementById('alienText');
+    const finalText = 'SIGNAL RECEIVED ★';
+    const alienChars = 'ᗩᗺᑕᗞᕮᖴᘜᕼᓰᒍᛕᒪᘻᑎᓍᕵᘉᖇᔕᖶᑌᐯᘺ᙭ᖻᔗ';
 
-// ── 파일 탐색기 트리 ──
-function treeToggle(el){
-  document.querySelectorAll('.tree-item').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-}
-function loadFolder(name, el){
-  treeToggle(el);
-  document.getElementById('explorer-addr').value='C:\\SMILEY337\\'+name.toUpperCase()+'\\';
-}
+    let decoded = 0;
 
-openWin('win-welcome');
-</script>
+    function typeAlien() {
+      let display = '';
+      for (let i = 0; i < finalText.length; i++) {
+        if (i < decoded) {
+          display += finalText[i];
+        } else {
+          display += alienChars[Math.floor(Math.random() * alienChars.length)];
+        }
+      }
+      alienEl.textContent = display;
+    }
+
+    setTimeout(() => {
+      alienEl.style.opacity = 1;
+      const decodeInterval = setInterval(() => {
+        typeAlien();
+        if (decoded < finalText.length) {
+          decoded++;
+        } else {
+          clearInterval(decodeInterval);
+        }
+      }, 100);
+    }, 800);
+
+    // ── 연도 ──
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ── BGM 자동재생 ──
+    const bgm = document.getElementById('bgm');
+    const bgmBtn = document.getElementById('bgmBtn');
+    const bgmBar = document.getElementById('bgmBar');
+    let playing = false;
+
+    function tryPlay() {
+      bgm.play().then(() => {
+        playing = true;
+        bgmBar.classList.remove('paused');
+      }).catch(() => {});
+    }
+
+    window.addEventListener('load', tryPlay);
+    document.addEventListener('click', function firstClick() {
+      if (!playing) tryPlay();
+      document.removeEventListener('click', firstClick);
+    }, { once: true });
+
+    bgmBtn.addEventListener('click', () => {
+      if (playing) {
+        bgm.pause();
+        playing = false;
+        bgmBar.classList.add('paused');
+      } else {
+        bgm.play();
+        playing = true;
+        bgmBar.classList.remove('paused');
+      }
+    });
+
+    // ── 스크롤 애니메이션 ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── 햄버거 메뉴 ──
+    $('#menuToggle').click(function(e) {
+      e.stopPropagation();
+      $('#mainNav').toggleClass('active');
+    });
+  </script>
 </body>
 </html>
