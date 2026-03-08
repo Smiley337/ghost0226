@@ -212,7 +212,6 @@
     <div class="label-top">// restricted access</div>
     <h2>비밀번호를<br>입력하세요</h2>
 
-    <!-- ★ destLabel이 여기 있어야 JS에서 참조 가능 -->
     <div class="dest-info">TARGET: <span id="destLabel">—</span></div>
 
     <div class="input-wrap">
@@ -237,18 +236,25 @@
     // =============================================
     const HASHED_PASSWORDS = {
       "default":   "c07513328104b15e2b3be00a018a690231b1fdf8fa441b5103182b3d8199aa55",
-      "k9mx2ptf": "90fade6fb78eaa0e6a7ca3cbe357fc645498c39e1207dbb915bd6aeddcdb4e15",
-      // "submenu01": "해시값",
+      // "k9mx2ptf": "해시값",  ← 파일별 다른 비번 설정하려면 여기에 추가
     };
     // =============================================
 
     const params = new URLSearchParams(window.location.search);
-    const encoded = params.get('d') || '';
-    const dest = encoded ? atob(encoded) : (params.get('dest') || 'index'); // base64 디코딩
+    const encodedDest = params.get('dest') || '';
+
+    // ★ Base64 디코딩
+    let dest = 'index';
+    try {
+      dest = encodedDest ? atob(encodedDest) : 'index';
+    } catch(e) {
+      // 디코딩 실패 시 메인으로
+      dest = 'index';
+    }
 
     // destLabel에 표시 (파일명 부분만)
     const destFileName = dest.split('/').pop();
-    //document.getElementById('destLabel').textContent = destFileName + '.html';
+    document.getElementById('destLabel').textContent = destFileName + '.html';
 
     // 해시 키는 파일명 기준으로 찾고, 없으면 default 사용
     const correctHash = HASHED_PASSWORDS[destFileName] || HASHED_PASSWORDS["default"];
@@ -294,7 +300,7 @@
         lockIcon.textContent = '🔓';
         lockIcon.classList.add('unlocked');
         document.getElementById('enterBtn').textContent = '✓ 입장 중...';
-        // dest 경로 그대로 + .html 붙여서 이동
+        // ★ 디코딩된 dest 경로로 이동
         setTimeout(() => { window.location.href = dest + '.html'; }, 700);
       } else {
         card.classList.remove('shake');

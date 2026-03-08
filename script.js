@@ -37,20 +37,18 @@ $(document).ready(function(){
     if (!href || href === '#') return;
 
     // href에서 파일명만 추출 (확장자 제거)
-    // 예: "menu5/k9mx2ptf.html" → "k9mx2ptf"
     const pageName = href.split('/').pop().replace('.html', '');
 
     if (LOCKED_PAGES.includes(pageName)) {
-      // ★ 경로에서 폴더 부분 추출
-      // 예: "menu5/k9mx2ptf.html" → "menu5"
+      // 폴더 경로 추출
       const parts = href.replace('.html', '').split('/');
       const folder = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
       const destPath = folder ? folder + '/' + pageName : pageName;
 
-      // lock.html로 이동하면서 dest 전달 (확장자 없이)
-      window.location.href = "lock.html?d=" + btoa(destPath);
+      // ★ Base64로 인코딩해서 lock.html로 이동
+      const encoded = btoa(destPath);
+      window.location.href = 'lock.html?dest=' + encoded;
     } else {
-      // 잠금 불필요 → 바로 이동
       window.location.href = href;
     }
   });

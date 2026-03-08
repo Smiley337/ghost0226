@@ -274,15 +274,13 @@
         <div class="col-arrow"></div>
       </div>
 
-      <!-- ★ href="#" 으로 바꾸고 onclick으로 잠금 처리 -->
-
       <a href="#" onclick="goLock('menu5/k9mx2ptf'); return false;" class="file-item">
         <div class="file-icon">🥑</div>
         <div class="file-name-wrap">
           <div class="file-name">AVO</div>
           <div class="file-desc">AVO_RESEARCH_FILE.LOG</div>
         </div>
-        <div class="file-date">2026.03.07</div>
+        <div class="file-date">20XX.XX.XX</div>
         <div><span class="file-badge badge-open">OPEN</span></div>
         <div class="file-arrow">▶</div>
       </a>
@@ -290,8 +288,8 @@
       <a href="#" onclick="goLock('menu5/r4nw7qvb'); return false;" class="file-item">
         <div class="file-icon">👽</div>
         <div class="file-name-wrap">
-          <div class="file-name">너임마청년</div>
-          <div class="file-desc">neumma.LOG</div>
+          <div class="file-name">ALIEN</div>
+          <div class="file-desc">ALIEN_RESEARCH_FILE.LOG</div>
         </div>
         <div class="file-date">20XX.XX.XX</div>
         <div><span class="file-badge badge-open">OPEN</span></div>
@@ -320,7 +318,6 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <!-- ??? 미스터리 - 잠금 처리 -->
       <a href="#" onclick="goLock('menu5/b2fg9urn'); return false;" class="file-item mystery">
         <div class="file-icon">👾</div>
         <div class="file-name-wrap">
@@ -342,10 +339,10 @@
   </div>
 
   <script>
-    // ★ sessionStorage에 목적지 저장 후 lock.html로 이동
+    // ★ Base64로 인코딩해서 lock.html로 이동
     function goLock(dest) {
-      const encoded = btoa(dest);  // base64 인코딩
-      window.location.href = '../lock.html?d=' + encoded;
+      const encoded = btoa(dest);
+      window.location.href = '../lock.html?dest=' + encoded;
     }
   </script>
 </body>
