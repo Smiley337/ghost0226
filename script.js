@@ -6,7 +6,6 @@ $(document).ready(function(){
     e.stopPropagation();
 
     const $sub = $(this).next('.SubMenu');
-
     $('.SubMenu').not($sub).slideUp('fast');
     $sub.slideToggle('fast');
   });
@@ -19,6 +18,7 @@ $(document).ready(function(){
 
   // =============================================
   //  ★ 잠금이 필요한 서브메뉴 설정 ★
+  //  잠금할 파일명(확장자 제외)을 아래 배열에 추가
   // =============================================
   const LOCKED_PAGES = [
     "k9mx2ptf",
@@ -36,12 +36,18 @@ $(document).ready(function(){
     const href = $(this).attr('href');
     if (!href || href === '#') return;
 
+    // href에서 파일명만 추출 (확장자 제거)
     const pageName = href.split('/').pop().replace('.html', '');
 
     if (LOCKED_PAGES.includes(pageName)) {
-      // ★ URL 대신 sessionStorage에 목적지 저장 → 주소창에 안 보임
-      sessionStorage.setItem('lockDest', 'menu5/' + pageName);
-      window.location.href = 'lock.html';
+      // 폴더 경로 추출
+      const parts = href.replace('.html', '').split('/');
+      const folder = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+      const destPath = folder ? folder + '/' + pageName : pageName;
+
+      // ★ Base64로 인코딩해서 lock.html로 이동
+      const encoded = btoa(destPath);
+      window.location.href = 'lock.html?dest=' + encoded;
     } else {
       window.location.href = href;
     }

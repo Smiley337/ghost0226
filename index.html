@@ -9,12 +9,6 @@
 </head>
 <body>
 
-  <!-- BGM (자동재생) -->
-  <!-- 
-    ★ BGM 파일 넣는 법:
-    mp3 파일을 같은 폴더에 넣고 src="파일명.mp3" 으로 바꿔줘.
-    또는 외부 URL도 가능해.
-  -->
   <audio id="bgm" loop>
     <source src="StarAndChill.wav" type="audio/mpeg">
   </audio>
@@ -95,13 +89,11 @@
 
       <!-- ── 히어로 섹션 ── -->
       <section class="hero">
-        <!-- 별 파티클 캔버스 (JS로 그려짐) -->
         <canvas id="starCanvas"></canvas>
         <div class="hero-glow"></div>
         <div class="hero-content">
           <div class="hero-tag">// WELCOME TO</div>
           <h1 class="hero-title">SMILEY<span>337</span></h1>
-          <!-- 외계어 느낌 로딩 텍스트 - JS가 타이핑 효과로 출력해줘 -->
           <p class="hero-sub" id="alienText"></p>
           <p class="hero-scroll">▼ SCROLL DOWN ▼</p>
         </div>
@@ -115,8 +107,6 @@
         <h2 class="section-title reveal reveal-delay-1">EXPLORE</h2>
 
         <div class="menu-grid">
-          <!-- 카드 아이콘은 나중에 실제 픽셀 이미지로 바꿀 수 있어! -->
-          <!-- 지금은 이모지로 임시 표현 -->
           <a href="#" class="menu-card reveal reveal-delay-1">
             <span class="menu-card-icon">🌐</span>
             <span class="menu-card-num">01 //</span>
@@ -141,7 +131,6 @@
             <div class="menu-card-title">MENU4</div>
             <div class="menu-card-desc">설명을 여기에</div>
           </a>
-          <!-- MENU5: 캐릭터 카드 (잠금) -->
           <a href="lock.html?dest=menu5/k9mx2ptf" class="menu-card reveal reveal-delay-5">
             <span class="menu-card-icon">👽</span>
             <span class="menu-card-num">05 //</span>
@@ -149,7 +138,6 @@
             <div class="menu-card-desc">🔒 RESTRICTED</div>
             <span class="menu-card-lock">🔒</span>
           </a>
-          <!-- ??? 미스터리 카드 (글리치 효과) -->
           <a href="#" class="menu-card mystery reveal reveal-delay-5">
             <span class="menu-card-icon">👾</span>
             <span class="menu-card-num">?? //</span>
@@ -185,17 +173,15 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // 별 객체 배열 생성
     const stars = Array.from({ length: 120 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 2 + 0.5,          // 반지름
-      speed: Math.random() * 0.3 + 0.05,   // 낙하 속도
+      r: Math.random() * 2 + 0.5,
+      speed: Math.random() * 0.3 + 0.05,
       opacity: Math.random(),
-      blink: Math.random() * 0.02 + 0.005  // 반짝임 속도
+      blink: Math.random() * 0.02 + 0.005
     }));
 
-    // 픽셀 UFO (간단한 사각형 픽셀아트)
     const ufos = Array.from({ length: 2 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height * 0.5,
@@ -204,23 +190,20 @@
     }));
 
     function drawPixelUFO(x, y) {
-      const s = 4; // 픽셀 1칸 크기
+      const s = 4;
       ctx.fillStyle = '#00ff88';
-      // UFO 몸통
       [[1,1,1],[1,1,1],[0,1,0]].forEach((row, ry) =>
         row.forEach((cell, rx) => {
           if (cell) ctx.fillRect(x + rx*s, y + ry*s, s, s);
         })
       );
       ctx.fillStyle = '#00ccff';
-      // UFO 불빛
       ctx.fillRect(x + s, y - s, s, s);
     }
 
     function animateStars() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 별 그리기
       stars.forEach(star => {
         star.opacity += star.blink;
         if (star.opacity > 1 || star.opacity < 0) star.blink *= -1;
@@ -233,7 +216,6 @@
         ctx.fill();
       });
 
-      // UFO 그리기
       ufos.forEach(ufo => {
         ufo.x += ufo.speed * ufo.dir;
         if (ufo.x > canvas.width + 20) ufo.x = -20;
@@ -246,28 +228,24 @@
     animateStars();
 
     // ── 외계어 타이핑 효과 ──
-    // 먼저 외계어처럼 보이다가 → 실제 텍스트로 해독되는 효과
     const alienEl = document.getElementById('alienText');
     const finalText = 'SIGNAL RECEIVED ★';
-    // 외계어 문자 풀
     const alienChars = 'ᗩᗺᑕᗞᕮᖴᘜᕼᓰᒍᛕᒪᘻᑎᓍᕵᘉᖇᔕᖶᑌᐯᘺ᙭ᖻᔗ';
 
-    let decoded = 0; // 몇 글자까지 해독됐는지
+    let decoded = 0;
 
     function typeAlien() {
       let display = '';
       for (let i = 0; i < finalText.length; i++) {
         if (i < decoded) {
-          display += finalText[i]; // 해독된 글자
+          display += finalText[i];
         } else {
-          // 아직 해독 안 된 글자 → 랜덤 외계어
           display += alienChars[Math.floor(Math.random() * alienChars.length)];
         }
       }
       alienEl.textContent = display;
     }
 
-    // 0.8초 후 시작, 0.1초마다 한 글자씩 해독
     setTimeout(() => {
       alienEl.style.opacity = 1;
       const decodeInterval = setInterval(() => {
@@ -289,25 +267,19 @@
     const bgmBar = document.getElementById('bgmBar');
     let playing = false;
 
-    // 브라우저 정책상 첫 클릭/상호작용 후 자동재생 시도
     function tryPlay() {
       bgm.play().then(() => {
         playing = true;
         bgmBar.classList.remove('paused');
-      }).catch(() => {
-        // 자동재생 차단된 경우 → 버튼 클릭 유도
-      });
+      }).catch(() => {});
     }
 
-    // 페이지 로드 시 바로 시도
     window.addEventListener('load', tryPlay);
-    // 첫 클릭 시도
     document.addEventListener('click', function firstClick() {
       if (!playing) tryPlay();
       document.removeEventListener('click', firstClick);
     }, { once: true });
 
-    // BGM 버튼 토글
     bgmBtn.addEventListener('click', () => {
       if (playing) {
         bgm.pause();
@@ -320,7 +292,7 @@
       }
     });
 
-    // ── 스크롤 애니메이션 (IntersectionObserver) ──
+    // ── 스크롤 애니메이션 ──
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -332,7 +304,6 @@
     reveals.forEach(el => observer.observe(el));
 
     // ── 햄버거 메뉴 ──
-    // (서브메뉴/잠금 처리는 script.js에서 담당)
     $('#menuToggle').click(function(e) {
       e.stopPropagation();
       $('#mainNav').toggleClass('active');

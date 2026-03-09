@@ -274,8 +274,6 @@
         <div class="col-arrow"></div>
       </div>
 
-      <!-- ★ href="#" 으로 바꾸고 onclick으로 잠금 처리 -->
-
       <a href="#" onclick="goLock('menu5/k9mx2ptf'); return false;" class="file-item">
         <div class="file-icon">🥑</div>
         <div class="file-name-wrap">
@@ -320,7 +318,6 @@
         <div class="file-arrow">▶</div>
       </a>
 
-      <!-- ??? 미스터리 - 잠금 처리 -->
       <a href="#" onclick="goLock('menu5/b2fg9urn'); return false;" class="file-item mystery">
         <div class="file-icon">👾</div>
         <div class="file-name-wrap">
@@ -342,10 +339,10 @@
   </div>
 
   <script>
-    // ★ sessionStorage에 목적지 저장 후 lock.html로 이동
+    // ★ Base64로 인코딩해서 lock.html로 이동
     function goLock(dest) {
-      sessionStorage.setItem('lockDest', dest);
-      window.location.href = '../lock.html';
+      const encoded = btoa(dest);
+      window.location.href = '../lock.html?dest=' + encoded;
     }
   </script>
 </body>
