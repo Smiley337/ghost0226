@@ -1,0 +1,50 @@
+=== index.html 수정 안내 (MENU2 → TWEET VAULT) ===
+
+▼ 사이드바 네비 MENU2 부분 교체:
+
+[교체 전]
+        <li>
+          <a href="#">MENU2</a>
+          <ul class="SubMenu">
+            <li><a href="#">submenu01</a></li>
+            <li><a href="#">submenu02</a></li>
+            <li><a href="#">submenu03</a></li>
+            <li><a href="#">submenu04</a></li>
+            <li><a href="#">submenu05</a></li>
+          </ul>
+        </li>
+
+[교체 후]
+        <li>
+          <a href="menu2/index.html">TWEET VAULT</a>
+          <ul class="SubMenu">
+            <li><a href="menu2/humor.html">유머 / 웃긴거</a></li>
+            <li><a href="menu2/info.html">정보 / 꿀팁</a></li>
+            <li><a href="menu2/art.html">그림 / 아트</a></li>
+            <li><a href="menu2/daily.html">일상 / 공감</a></li>
+            <li><a href="menu2/tretle.html">트레틀</a></li>
+          </ul>
+        </li>
+
+────────────────────────────────────────────────
+▼ 메인 페이지 카드 섹션 MENU2 카드 교체:
+
+[교체 전]
+          <a href="#" class="menu-card reveal reveal-delay-2">
+            <span class="menu-card-icon">🪐</span>
+            <span class="menu-card-num">02 //</span>
+            <div class="menu-card-title">MENU2</div>
+            <div class="menu-card-desc">설명을 여기에</div>
+          </a>
+
+[교체 후]
+          <a href="menu2/index.html" class="menu-card reveal reveal-delay-2">
+            <span class="menu-card-icon">🐦</span>
+            <span class="menu-card-num">02 //</span>
+            <div class="menu-card-title">TWEET VAULT</div>
+            <div class="menu-card-desc">저장한 트윗 모음</div>
+          </a>
+
+────────────────────────────────────────────────
+▼ script.js는 수정 불필요!
+  (MENU2 링크들은 잠금 페이지 없이 바로 이동)

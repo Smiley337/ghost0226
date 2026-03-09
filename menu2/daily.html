@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>일상 / 공감 — TWEET VAULT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;
+      --pixel:#00ff88;--pixel2:#ff6b35;--pixel3:#00ccff;
+      --accent:#00ff88;--glow:rgba(0,255,136,0.12);--glowborder:rgba(0,255,136,0.3);
+      --text:#e0e0f0;--muted:#556066;--scanline:rgba(0,255,136,0.03);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'VT323',monospace;min-height:100vh;overflow-x:hidden}
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,var(--scanline) 0px,var(--scanline) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--glow) 1px,transparent 1px),linear-gradient(90deg,var(--glow) 1px,transparent 1px);background-size:32px 32px;z-index:0;pointer-events:none}
+
+    .nav-btns{position:fixed;top:20px;left:20px;z-index:100;display:flex;gap:10px;flex-wrap:wrap}
+    .nav-btn{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--pixel);text-decoration:none;background:var(--surface);border:2px solid var(--pixel);padding:10px 14px;box-shadow:3px 3px 0 #006633;transition:box-shadow .1s,transform .1s;white-space:nowrap;display:block}
+    .nav-btn:hover{box-shadow:1px 1px 0 #006633;transform:translate(2px,2px)}
+    .nav-btn.vault{color:var(--accent);border-color:var(--accent);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+    .nav-btn.vault:hover{box-shadow:1px 1px 0 rgba(0,0,0,.4)}
+
+    .page{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:90px 32px 80px}
+
+    .page-header{margin-bottom:40px;opacity:0;animation:fadeup .7s ease .1s forwards}
+    .page-tag{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--muted);letter-spacing:3px;margin-bottom:10px}
+    .page-path{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px}
+    .page-path b{color:var(--accent)}
+    .page-icon{font-size:48px;display:block;margin-bottom:14px;animation:ibounce 3s ease-in-out infinite}
+    @keyframes ibounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .page-title{font-family:'Press Start 2P',monospace;font-size:clamp(16px,3vw,28px);color:var(--text);margin-bottom:10px;line-height:1.6}
+    .page-title b{color:var(--accent);text-shadow:0 0 20px var(--accent)}
+    .page-desc{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:1px}
+
+    .terminal-bar{background:var(--surface);border:1px solid var(--border);border-bottom:none;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;opacity:0;animation:fadeup .7s ease .2s forwards}
+    .terminal-bar b{color:var(--accent)}
+
+    .tweets-section{border:1px solid var(--border);padding:28px;background:rgba(12,12,20,0.7);opacity:0;animation:fadeup .7s ease .3s forwards}
+    .tweet-grid{columns:2;column-gap:20px}
+    @media(max-width:680px){.tweet-grid{columns:1}}
+    .tweet-wrap{break-inside:avoid;margin-bottom:20px;border:1px solid var(--border);background:var(--surface);padding:4px;transition:border-color .2s,box-shadow .2s}
+    .tweet-wrap:hover{border-color:var(--accent);box-shadow:0 0 16px var(--glow)}
+
+    .empty-state{text-align:center;padding:64px 20px;border:2px dashed var(--border)}
+    .empty-icon{font-size:52px;display:block;margin-bottom:18px;opacity:.4}
+    .empty-title{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:14px}
+    .empty-desc{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);line-height:1.9}
+    .empty-desc code{background:var(--glow);border:1px solid var(--glowborder);padding:2px 6px;color:var(--accent);font-size:11px}
+
+    .status-bar{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);padding:8px 20px;display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;opacity:0;animation:fadeup .7s ease .4s forwards}
+    .status-bar b{color:var(--accent)}
+
+    .add-guide{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);padding:20px 24px;margin-top:28px;opacity:0;animation:fadeup .7s ease .5s forwards}
+    .add-guide-title{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--accent);letter-spacing:2px;margin-bottom:14px}
+    .add-guide p{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);line-height:2.2;letter-spacing:.5px}
+    .add-guide p b{color:var(--pixel)}
+    .add-guide code{background:var(--glow);border:1px solid var(--glowborder);padding:2px 6px;color:var(--accent);font-size:11px}
+    pre{background:#06060e;border:1px solid var(--border);border-left:2px solid var(--accent);padding:16px;margin:12px 0;overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);line-height:1.9;opacity:.85}
+
+    @keyframes fadeup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+  <div class="nav-btns">
+    <a href="../index.html" class="nav-btn">&#8592; HOME</a>
+    <a href="index.html" class="nav-btn vault">&#128194; VAULT</a>
+  </div>
+
+  <div class="page">
+
+    <div class="page-header">
+      <div class="page-tag">// TWEET VAULT &#8212; 04 / 05</div>
+      <div class="page-path">PATH: /menu2/<b>daily.html</b></div>
+      <span class="page-icon">🌿</span>
+      <h1 class="page-title"><b>일상 / 공감</b></h1>
+      <p class="page-desc">맞아맞아 싶은 공감 트윗들</p>
+    </div>
+
+    <div class="terminal-bar">
+      <b>DAILY.LOG</b>
+      <span>STATUS: <b>READ</b></span>
+    </div>
+
+    <!-- ★★★ 트윗 추가 영역 ★★★ -->
+    <div class="tweets-section">
+      <div class="tweet-grid" id="tweetGrid">
+
+        <!--
+        =============================================
+        ★ 트윗 추가하는 법 ★
+        X(트위터) → 공유 → 임베드 트윗 → 코드 복사
+        → 아래 .tweet-wrap div 안에 붙여넣기!
+        =============================================
+
+        <div class="tweet-wrap">
+          <blockquote class="twitter-tweet" data-theme="dark">
+            여기에 X에서 복사한 코드 붙여넣기
+          </blockquote>
+        </div>
+
+        -->
+
+        <!-- 트윗 없을 때 표시 — 트윗 추가 후 이 div 삭제 -->
+        <div class="empty-state" id="emptyState">
+          <span class="empty-icon">🌿</span>
+          <div class="empty-title">NO TWEETS YET</div>
+          <div class="empty-desc">
+            아직 저장된 트윗이 없어요.<br>
+            X에서 <code>임베드 트윗</code> 코드를 복사해서<br>
+            아래 가이드대로 붙여넣으면 돼!
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span id="tweetCount">0 TWEETS SAVED</span>
+      <span>SMILEY337 TWEET VAULT &#8212; <b>일상 / 공감</b></span>
+    </div>
+
+    <div class="add-guide">
+      <div class="add-guide-title">// ADD A TWEET TO THIS COLLECTION</div>
+      <p><b>1.</b> X에서 저장할 트윗 &#8594; 공유(&#8599;) &#8594; <code>임베드 트윗</code> 클릭해서 코드 복사</p>
+      <p><b>2.</b> 이 파일 <code>daily.html</code> 의 <code>#tweetGrid</code> 안에 아래 블록 추가:</p>
+      <pre>&lt;div class="tweet-wrap"&gt;
+  &lt;blockquote class="twitter-tweet" data-theme="dark"&gt;
+    &lt;!-- 복사한 코드 여기 --&gt;
+  &lt;/blockquote&gt;
+&lt;/div&gt;</pre>
+      <p><b>3.</b> 트윗을 추가했으면 <code>#emptyState</code> div는 삭제하면 깔끔해!</p>
+    </div>
+
+  </div>
+
+  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+  <script>
+    window.addEventListener('load', () => {
+      const tweets = document.querySelectorAll('.tweet-wrap blockquote');
+      const n = tweets.length;
+      document.getElementById('tweetCount').textContent = n + ' TWEET' + (n !== 1 ? 'S' : '') + ' SAVED';
+      if (n > 0) { const e = document.getElementById('emptyState'); if(e) e.style.display='none'; }
+    });
+  </script>
+</body>
+</html>

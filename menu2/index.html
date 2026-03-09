@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TWEET VAULT — SMILEY337</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0a0a0f;--surface:#12121a;--border:#2a2a3a;
+      --pixel:#00ff88;--pixel2:#ff6b35;--pixel3:#00ccff;
+      --text:#e0e0f0;--muted:#556066;--scanline:rgba(0,255,136,0.03);
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'VT323',monospace;min-height:100vh;overflow-x:hidden}
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,var(--scanline) 0px,var(--scanline) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.04) 1px,transparent 1px);background-size:32px 32px;z-index:0;pointer-events:none}
+    .back-btn{position:fixed;top:20px;left:20px;z-index:100;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--pixel);text-decoration:none;background:var(--surface);border:2px solid var(--pixel);padding:10px 14px;box-shadow:3px 3px 0 #006633;transition:box-shadow .1s,transform .1s;display:block}
+    .back-btn:hover{box-shadow:1px 1px 0 #006633;transform:translate(2px,2px)}
+    .page{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:80px 32px 80px}
+    .page-header{margin-bottom:56px;opacity:0;animation:fadeup .7s ease .1s forwards}
+    .page-tag{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--muted);letter-spacing:3px;margin-bottom:12px}
+    .page-title{font-family:'Press Start 2P',monospace;font-size:clamp(20px,4vw,40px);color:var(--text);text-shadow:4px 4px 0 var(--pixel3),8px 8px 0 rgba(0,204,255,.1);margin-bottom:14px;line-height:1.5}
+    .page-title span{color:var(--pixel3)}
+    .page-desc{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:1px}
+    .stat-bar{display:flex;gap:24px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--pixel3);padding:14px 20px;margin-bottom:40px;opacity:0;animation:fadeup .7s ease .2s forwards}
+    .stat-item{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px}
+    .stat-item b{color:var(--pixel3)}
+    .collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;opacity:0;animation:fadeup .7s ease .3s forwards}
+    .collection-card{background:var(--surface);border:2px solid var(--border);padding:28px 24px 48px;text-decoration:none;display:block;position:relative;overflow:hidden;transition:border-color .2s,transform .15s,box-shadow .2s}
+    .collection-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,204,255,.05) 0%,transparent 60%);opacity:0;transition:opacity .2s}
+    .collection-card:hover{border-color:var(--pixel3);transform:translate(-4px,-4px);box-shadow:4px 4px 0 var(--pixel3)}
+    .collection-card:hover::before{opacity:1}
+    .card-num{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--pixel2);letter-spacing:2px;margin-bottom:14px;display:block}
+    .card-icon{font-size:38px;display:block;margin-bottom:14px;transition:transform .2s}
+    .collection-card:hover .card-icon{transform:scale(1.15) rotate(-5deg)}
+    .card-title{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--text);line-height:1.8;margin-bottom:8px}
+    .card-desc{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);line-height:1.5}
+    .card-tag{position:absolute;bottom:14px;right:14px;font-family:'Press Start 2P',monospace;font-size:7px;color:var(--pixel3);letter-spacing:1px;background:rgba(0,204,255,.08);padding:4px 8px;border:1px solid rgba(0,204,255,.2)}
+    .pixel-divider{border:none;height:2px;background:repeating-linear-gradient(90deg,var(--pixel3) 0px,var(--pixel3) 8px,transparent 8px,transparent 16px);margin:48px 0;opacity:.3}
+    .guide-section{opacity:0;animation:fadeup .7s ease .5s forwards}
+    .guide-header{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--pixel);letter-spacing:3px;margin-bottom:16px}
+    .guide-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--pixel);padding:20px 24px}
+    .guide-box p{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);line-height:2.2;letter-spacing:.5px}
+    .guide-box p b{color:var(--pixel)}
+    .guide-box code{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);padding:2px 6px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--pixel3)}
+    @keyframes fadeup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+  <a href="../index.html" class="back-btn">← BACK</a>
+  <div class="page">
+    <div class="page-header">
+      <div class="page-tag">// SMILEY337 ARCHIVE</div>
+      <h1 class="page-title">TWEET<br><span>VAULT</span></h1>
+      <p class="page-desc">내가 저장하고 싶은 트윗 모음집 — 카테고리별 정리</p>
+    </div>
+    <div class="stat-bar">
+      <div class="stat-item">TOTAL COLLECTIONS: <b>5</b></div>
+      <div class="stat-item">FORMAT: <b>X / TWITTER EMBED</b></div>
+      <div class="stat-item">STATUS: <b>ACTIVE</b></div>
+    </div>
+    <div class="collection-grid">
+      <a href="humor.html" class="collection-card">
+        <span class="card-num">01 //</span>
+        <span class="card-icon">😂</span>
+        <div class="card-title">유머 / 웃긴거</div>
+        <div class="card-desc">그냥 보면 웃기는 트윗들 모음</div>
+        <span class="card-tag">HUMOR</span>
+      </a>
+      <a href="info.html" class="collection-card">
+        <span class="card-num">02 //</span>
+        <span class="card-icon">💡</span>
+        <div class="card-title">정보 / 꿀팁</div>
+        <div class="card-desc">나중에 써먹을 유용한 정보들</div>
+        <span class="card-tag">INFO</span>
+      </a>
+      <a href="art.html" class="collection-card">
+        <span class="card-num">03 //</span>
+        <span class="card-icon">🎨</span>
+        <div class="card-title">그림 / 아트</div>
+        <div class="card-desc">마음에 드는 그림 & 아트 트윗</div>
+        <span class="card-tag">ART</span>
+      </a>
+      <a href="daily.html" class="collection-card">
+        <span class="card-num">04 //</span>
+        <span class="card-icon">🌿</span>
+        <div class="card-title">일상 / 공감</div>
+        <div class="card-desc">맞아맞아 싶은 공감되는 트윗들</div>
+        <span class="card-tag">DAILY</span>
+      </a>
+      <a href="tretle.html" class="collection-card">
+        <span class="card-num">05 //</span>
+        <span class="card-icon">⭐</span>
+        <div class="card-title">트레틀</div>
+        <div class="card-desc">트레틀 관련 트윗 모음</div>
+        <span class="card-tag">TRETLE</span>
+      </a>
+    </div>
+    <hr class="pixel-divider">
+    <div class="guide-section">
+      <div class="guide-header">// HOW TO ADD TWEETS</div>
+      <div class="guide-box">
+        <p><b>STEP 1.</b> X(트위터)에서 저장할 트윗 → 공유 버튼 → <code>임베드 트윗</code> 클릭</p>
+        <p><b>STEP 2.</b> 복사한 <code>&lt;blockquote&gt;...&lt;/blockquote&gt;</code> 코드를 원하는 카테고리 .html 파일 안에 붙여넣기</p>
+        <p><b>STEP 3.</b> 저장 후 GitHub에 push — 끝!</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
