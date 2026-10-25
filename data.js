@@ -227,7 +227,7 @@ window.SITE = {
        (번호 01, 02 … 는 자동으로 붙어요)
      ---------------------------------------------------------- */
   menu: [
-    { name: "Oc",    link: "#oc" },
+    { name: "OC",    link: "#oc" },
     { name: "Pair",  link: "#pair" },
     { name: "Owner", link: "#owner" },
     { name: "Guest", link: "#guest" }
@@ -297,12 +297,12 @@ window.SITE = {
     weekStart: 0,
     upcoming: 2,
     events: [
-      { date: "03-14", title: "캐릭터 생일" },
-      { date: "2020-06-01", title: "페어 기념일", yearly: true },
+      { date: "08-13", title: "라이칸 생일" },
+      { date: "2020-12-04", title: "... 기념일", yearly: true },
       { date: "12-25", title: "크리스마스" }
     ],
     counters: [
-      { date: "2020-06-01", title: "페어 이름" }
+      { date: "2020-06-01", title: "LILEY" }
     ],
     countFromOne: true
   }
@@ -319,7 +319,7 @@ window.SITE = {
   oc: {
 
     /* ---------- 목록 화면 ---------- */
-    title: "Oc",                      // 목록 화면 큰 제목
+    title: "OC",                      // 목록 화면 큰 제목
     subtitle: "Original Characters",  // 제목 아래 작은 글자
     listGrayscale: true,              // 목록 카드 이미지를 흑백으로 두고,
                                       // 마우스를 올리면 컬러로 (true / false)
@@ -400,12 +400,12 @@ window.SITE = {
        ---------------------------------- */
     list: [
       {
-        id: "char1",
-        name: "캐릭터 이름",
-        en: "CHARACTER NAME",
+        id: "smiley",
+        name: "스마일리",
+        en: "SMILEY",
         tag: "No.01",
-        subtitle: "한 줄 소개가 들어갑니다",
-        desc: "짧은 설명이 들어갑니다.",
+        subtitle: "마법사의 탑의 주인",
+        desc: "???년 동안 세상의 존재를 지켜봐 왔으며, 차원 이동이 주 능력인 최강자 중 한명입니다.",
         thumb: "",
         standingSize: 920,
         color: "",
@@ -422,8 +422,8 @@ window.SITE = {
             thumb: "",
             color: "",                        // AU 대표색 (비우면 캐릭터 대표색)
             tag: "No.01 · AU",
-            subtitle: "AU 한 줄 소개가 들어갑니다",
-            desc: "AU 설명이 들어갑니다.",
+            subtitle: "진정한 군주",
+            desc: "스마일리가 마탑의 주인이 아닌, 세계의 주인인 시간선.",
             badge: { image: "", title: "AU 진영", sub: "AU 에서의 소속" },
             tabs: [
               {
@@ -455,8 +455,8 @@ window.SITE = {
                 name: "프로필",
                 sections: [
                   { title: "기본 정보", en: "INFORMATION", rows: [
-                    ["나이", "00세"],
-                    ["키", "000cm"]
+                    ["나이", "???세"],
+                    ["키", "167cm"]
                   ] },
                   { title: "성격", en: "CHARACTER", text: "성장 후의 성격이 들어갑니다." }
                 ]
