@@ -517,12 +517,12 @@ window.SITE = {
       },
 
       {
-        id: "char2",
-        name: "캐릭터 이름 2",
-        en: "CHARACTER NAME 2",
+        id: "lykan",
+        name: "라이칸",
+        en: "LYKAN",
         tag: "No.02",
-        subtitle: "한 줄 소개가 들어갑니다",
-        desc: "짧은 설명이 들어갑니다.",
+        subtitle: "... 식인",
+        desc: "스마일리로 인해 ???년 동안이나 살아버린, 식인.",
         thumb: "",
         standingSize: 920,
         color: "",
