@@ -1411,10 +1411,10 @@ a.pr-portrait:hover .pr-portrait-go { opacity: 1; transform: none; }
 .pr-side--l.is-stacked .pr-portrait-go { right: 14px; bottom: auto; top: 14px; }
 .pr-side--r.is-stacked .pr-portrait-go { right: auto; left: 14px; bottom: auto; top: 14px; }
 
-/* 뒤의 큰 필기체 글자 */
+/* 뒤의 큰 필기체 글자 (클로즈업 · 스탠딩보다 뒤) */
 .pr-script {
   position: absolute;
-  z-index: 2;
+  z-index: 0;
   left: 0; right: 0;
   top: 300px;
   text-align: center;
@@ -2369,6 +2369,80 @@ a.bn-item:hover {
   white-space: pre-line;
   color: var(--c-sub);
 }
+
+/* 방명록 위쪽 : 제목 + 오너 열쇠 버튼 */
+.gs-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gs-key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px dashed var(--c-line);
+  border-radius: 50%;
+  background: none;
+  color: var(--c-sub);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+}
+.gs-key:hover, .gs-key.is-on { opacity: 1; color: var(--c-text); border-color: var(--c-accent); border-style: solid; }
+.gs-key svg {
+  width: 15px; height: 15px;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* 오너 로그인 / 오너 메뉴 */
+.gs-admin { margin-bottom: 14px; animation: fadeUp 0.35s ease both; }
+.gs-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px dashed var(--c-line);
+}
+.gs-login-t { width: 100%; font-size: 13px; font-weight: 800; color: var(--c-text); }
+.gs-login .gs-input { flex: 1; width: auto; min-width: 140px; }
+.gs-admin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--c-soft);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.gs-tabs { display: flex; gap: 8px; margin-top: 22px; }
+.gs-tabs + .gs-list { margin-top: 12px; }
+.gs-lock {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--c-soft);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-sub);
+}
+.gs-acts { display: flex; gap: 6px; margin-top: 10px; }
+.gs-act {
+  padding: 5px 12px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
+  background: var(--c-card);
+  font: 700 12px var(--font);
+  color: var(--c-sub);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.gs-act:hover { color: var(--c-text); border-color: var(--c-accent); }
+.gs-act.is-del:hover { color: #c0392b; border-color: #c0392b; }
+.gs-reply-edit { margin-top: 12px; }
+.gs-reply-edit .gs-text { min-height: 70px; }
 
 /* 외부 위젯 */
 .gs-widget iframe {

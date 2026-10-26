@@ -673,7 +673,9 @@
       var box = el('div', 'oc-card-img');
       var src = c.thumb || ((c.standing || [])[0] || {}).image;
       if (src) {
-        var img = el('img'); img.src = src; img.alt = c.name || '';
+        var img = el('img'); img.alt = c.name || '';
+        img.onerror = function () { img.remove(); box.appendChild(el('span', 'oc-ph', 'NO IMAGE')); };   /* 파일을 못 찾으면 깨진 그림 대신 */
+        img.src = src;
         box.appendChild(img);
       } else {
         box.appendChild(el('span', 'oc-ph', 'NO IMAGE'));
@@ -704,6 +706,7 @@
       if (v.image) {
         var img = el('img'); img.alt = c.name || '';
         img.onload = function () { img.classList.add('is-in'); };
+        img.onerror = function () { stand.innerHTML = ''; bg.innerHTML = ''; stand.appendChild(el('div', 'pf-stand-ph is-in', 'STANDING IMAGE')); };
         img.src = v.image;
         if (img.complete) img.classList.add('is-in');
         stand.appendChild(img);
@@ -1827,11 +1830,13 @@
        오른쪽 : 방명록
        ====================================================== */
     var panel = $('gPanel');
-    var mode = G.mode || 'google';
-    panel.appendChild(el('p', 'pr-detail-title', G.boardTitle || 'Guestbook'));
+    var mode = G.mode || 'firebase';
+    var head = el('div', 'gs-head');
+    head.appendChild(el('p', 'pr-detail-title', G.boardTitle || 'Guestbook'));
+    panel.appendChild(head);
 
     if (mode === 'widget') buildWidget();
-    else if (mode === 'google') buildGoogle();
+    else if (mode === 'firebase') buildFirebase();
     else panel.appendChild(el('p', 'gs-empty', G.emptyText || '방명록은 왼쪽 링크를 이용해 주세요.'));
 
     /* ---------- 외부 위젯 넣기 ---------- */
@@ -1859,175 +1864,292 @@
       panel.appendChild(box);
     }
 
-    /* ---------- 구글 폼 + 시트 방명록 ---------- */
-    function buildGoogle() {
-      var GG = G.google || {};
-      var ready = GG.formAction && GG.messageEntry;
+    /* ======================================================
+       Firebase 방명록
+       - 공개 글   : guestbook        (누구나 읽기 / 쓰기)
+       - 비밀글    : guestbook_secret (누구나 쓰기 / 오너만 읽기)
+       - 오너 로그인 : 답글 달기, 글 지우기, 비밀글 보기
+       ====================================================== */
+    function buildFirebase() {
+      var FB = G.firebase || {}, CFG = FB.config || {};
+      var ready = !!(CFG.apiKey && CFG.projectId);
+      var COL = FB.collection || 'guestbook', SCOL = COL + '_secret';
+      var PER = FB.perPage || 10, MAX = FB.maxLength || 1000, NEWEST = FB.newestFirst !== false;
+      var useSecret = FB.secret !== false;
+      var SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 
       /* 1) 글쓰기 칸 */
       var form = el('form', 'gs-form');
       form.innerHTML =
         '<div class="gs-form-row">' +
           '<input class="gs-input" name="name" maxlength="20" autocomplete="off">' +
-          (GG.secretEntry ? '<label class="gs-secret"><input type="checkbox" name="secret"><span>비밀글</span></label>' : '') +
+          (useSecret ? '<label class="gs-secret"><input type="checkbox" name="secret"><span>비밀글</span></label>' : '') +
         '</div>' +
-        '<textarea class="gs-input gs-text" name="message" maxlength="' + (GG.maxLength || 1000) + '" rows="3"></textarea>' +
+        '<textarea class="gs-input gs-text" name="message" maxlength="' + MAX + '" rows="3"></textarea>' +
         '<div class="gs-form-foot">' +
-          '<span class="gs-count">0 / ' + (GG.maxLength || 1000) + '</span>' +
+          '<span class="gs-count">0 / ' + MAX + '</span>' +
           '<button class="bn-btn gs-send" type="submit">' + (G.sendText || '남기기') + '</button>' +
         '</div>';
       var nameIn = form.querySelector('[name=name]'), msgIn = form.querySelector('[name=message]');
       nameIn.placeholder = G.namePlaceholder || '이름';
       msgIn.placeholder = G.messagePlaceholder || '방명록을 남겨 주세요!';
       msgIn.addEventListener('input', function () {
-        form.querySelector('.gs-count').textContent = msgIn.value.length + ' / ' + (GG.maxLength || 1000);
+        form.querySelector('.gs-count').textContent = msgIn.value.length + ' / ' + MAX;
       });
       panel.appendChild(form);
 
-      /* 2) 글 목록 */
+      /* 2) 오너 메뉴 (오른쪽 위 열쇠 버튼) */
+      var keyBtn = el('button', 'gs-key');
+      keyBtn.type = 'button'; keyBtn.title = '오너 로그인';
+      keyBtn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14 9l2 2"/></svg>';
+      head.appendChild(keyBtn);
+      var admin = el('div', 'gs-admin'); admin.hidden = true;
+      panel.appendChild(admin);
+
+      /* 3) 글 목록 */
+      var tabs = el('div', 'gs-tabs'); tabs.hidden = true;
       var listBox = el('div', 'gs-list');
       var more = el('button', 'pr-nav-btn gs-more', '더 보기');
-      more.hidden = true;
+      more.type = 'button'; more.hidden = true;
+      panel.appendChild(tabs);
       panel.appendChild(listBox);
       panel.appendChild(more);
 
       if (!ready) {
         form.classList.add('is-off');
+        keyBtn.hidden = true;
         listBox.appendChild(el('p', 'gs-empty',
-          '아직 방명록이 연결되지 않았어요.\ndata.js ⑪ guest → google 의 설정 방법을 따라 구글 폼과 시트를 연결해 주세요.'));
+          '아직 방명록이 연결되지 않았어요.\n편집기의 "방명록 연결" 을 따라 Firebase 를 연결해 주세요.'));
+        form.addEventListener('submit', function (ev) { ev.preventDefault(); toast('아직 방명록이 연결되지 않았어요.'); });
+        return;
       }
 
-      var entries = [], shown = 0, PER = GG.perPage || 10;
+      /* Firebase 불러오기 (필요할 때 인터넷에서) */
+      var S = null;
+      var sdk = Promise.all([
+        import(SDK + 'firebase-app.js'), import(SDK + 'firebase-firestore.js'), import(SDK + 'firebase-auth.js')
+      ]).then(function (m) {
+        var A = m[0], F = m[1], U = m[2];
+        var app;
+        try { app = A.getApp('oc-guestbook'); } catch (e) { app = A.initializeApp(CFG, 'oc-guestbook'); }
+        S = { F: F, U: U, db: F.getFirestore(app), auth: U.getAuth(app) };
+        return S;
+      });
 
-      function card(e, isNew) {
+      function errText(e) {
+        var c = (e && e.code) || '';
+        if (/permission-denied/.test(c)) return '권한이 없어요. Firebase 보안 규칙을 확인해 주세요.';
+        if (/unavailable|network/.test(c)) return '인터넷 연결을 확인해 주세요.';
+        if (/invalid-api-key|api-key/.test(c)) return 'Firebase 설정(apiKey)이 올바르지 않아요.';
+        if (/not-found/.test(c)) return 'Firestore 데이터베이스를 찾지 못했어요. 만들었는지 확인해 주세요.';
+        return '잠시 뒤 다시 시도해 주세요.' + (c ? ' (' + c + ')' : '');
+      }
+      function fmtTime(ts) {
+        if (!ts || !ts.toDate) return '방금';
+        var d = ts.toDate(), h = d.getHours(), ap = h < 12 ? '오전' : '오후';
+        var hh = h % 12 || 12, mm = ('0' + d.getMinutes()).slice(-2);
+        return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + ' ' + ap + ' ' + hh + ':' + mm;
+      }
+
+      /* ---------- 글 카드 ---------- */
+      var isOwner = false, view = 'public', lastDoc = null, loading = false;
+      function card(ref, data, isNew) {
         var c = el('article', 'gs-item' + (isNew ? ' is-new' : ''));
-        var head = el('div', 'gs-item-head');
-        head.appendChild(el('strong', 'gs-item-name', e.name || '익명'));
-        head.appendChild(el('span', 'gs-item-date', e.time || ''));
-        c.appendChild(head);
-        c.appendChild(el('p', 'gs-item-text', e.message || ''));
-        if (e.reply) {
+        var hd = el('div', 'gs-item-head');
+        hd.appendChild(el('strong', 'gs-item-name', data.name || '익명'));
+        if (view === 'secret') hd.appendChild(el('span', 'gs-lock', '비밀글'));
+        hd.appendChild(el('span', 'gs-item-date', fmtTime(data.time)));
+        c.appendChild(hd);
+        c.appendChild(el('p', 'gs-item-text', data.message || ''));
+        var replyBox = el('div');
+        function drawReply() {
+          replyBox.innerHTML = '';
+          if (!data.reply) return;
           var rp = el('div', 'gs-reply');
           rp.appendChild(el('span', 'gs-reply-name', '↳ ' + (G.ownerName || 'Owner')));
-          rp.appendChild(el('p', '', e.reply));
-          c.appendChild(rp);
+          rp.appendChild(el('p', '', data.reply));
+          replyBox.appendChild(rp);
+        }
+        drawReply();
+        c.appendChild(replyBox);
+
+        /* 오너만 : 답글 / 지우기 */
+        if (isOwner && ref) {
+          var acts = el('div', 'gs-acts');
+          var rb = el('button', 'gs-act', data.reply ? '답글 고치기' : '답글 달기');
+          var db = el('button', 'gs-act is-del', '지우기');
+          rb.type = db.type = 'button';
+          acts.appendChild(rb); acts.appendChild(db);
+          c.appendChild(acts);
+          rb.onclick = function () {
+            if (c.querySelector('.gs-reply-edit')) return;
+            var ed = el('div', 'gs-reply-edit');
+            var ta = el('textarea', 'gs-input gs-text'); ta.value = data.reply || ''; ta.placeholder = '답글을 적어 주세요 (비우면 답글 삭제)';
+            var ok = el('button', 'bn-btn', '저장'), no = el('button', 'gs-act', '취소');
+            ok.type = no.type = 'button';
+            var row = el('div', 'gs-acts'); row.appendChild(ok); row.appendChild(no);
+            ed.appendChild(ta); ed.appendChild(row);
+            c.insertBefore(ed, acts);
+            ta.focus();
+            no.onclick = function () { ed.remove(); };
+            ok.onclick = function () {
+              var v = ta.value.trim();
+              S.F.updateDoc(ref, { reply: v }).then(function () {
+                data.reply = v; drawReply(); ed.remove();
+                rb.textContent = v ? '답글 고치기' : '답글 달기';
+                toast(v ? '답글을 달았어요.' : '답글을 지웠어요.');
+              }).catch(function (e) { toast('저장하지 못했어요. ' + errText(e)); });
+            };
+          };
+          db.onclick = function () {
+            if (!confirm('이 글을 지울까요? 되돌릴 수 없어요.')) return;
+            S.F.deleteDoc(ref).then(function () { c.remove(); toast('글을 지웠어요.'); })
+              .catch(function (e) { toast('지우지 못했어요. ' + errText(e)); });
+          };
         }
         return c;
       }
 
-      function showMore() {
-        var next = entries.slice(shown, shown + PER);
-        next.forEach(function (e, i) {
-          var c = card(e);
-          c.style.animationDelay = (i * 0.04) + 's';
-          listBox.appendChild(c);
-        });
-        shown += next.length;
-        more.hidden = shown >= entries.length;
-      }
-      more.onclick = showMore;
-
-      /* 시트(CSV) 불러오기 */
-      function load() {
-        if (!GG.sheetCsv) return;
-        listBox.innerHTML = '';
-        listBox.appendChild(el('p', 'gs-empty', '불러오는 중…'));
-        var url = GG.sheetCsv + (GG.sheetCsv.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now();
-        fetch(url).then(function (r) {
-          if (!r.ok) throw new Error(r.status);
-          return r.text();
-        }).then(function (text) {
-          var col = GG.columns || {};
-          var ci = function (key, def) { return col[key] == null ? def : col[key]; };
-          var rows = parseCSV(text).slice(1);                   /* 첫 줄은 제목 줄 */
-          entries = rows.map(function (r) {
-            return {
-              time: shortTime(r[ci('time', 0)]),
-              name: (r[ci('name', 1)] || '').trim(),
-              message: (r[ci('message', 2)] || '').trim(),
-              secret: (r[ci('secret', 3)] || '').trim(),
-              reply: (r[ci('reply', 4)] || '').trim()
-            };
-          }).filter(function (e) {
-            return e.message && e.secret !== (GG.secretValue || '비공개');
+      /* ---------- 목록 불러오기 (더 보기로 이어서) ---------- */
+      function load(reset) {
+        if (loading) return;
+        loading = true;
+        if (reset) {
+          lastDoc = null; listBox.innerHTML = '';
+          listBox.appendChild(el('p', 'gs-empty', '불러오는 중…'));
+        }
+        sdk.then(function () {
+          var F = S.F, parts = [F.collection(S.db, view === 'secret' ? SCOL : COL), F.orderBy('time', NEWEST ? 'desc' : 'asc')];
+          if (lastDoc) parts.push(F.startAfter(lastDoc));
+          parts.push(F.limit(PER));
+          return F.getDocs(F.query.apply(null, parts));
+        }).then(function (snap) {
+          if (reset) listBox.innerHTML = '';
+          snap.docs.forEach(function (d, i) {
+            var c = card(d.ref, d.data());
+            c.style.animationDelay = (i * 0.04) + 's';
+            listBox.appendChild(c);
           });
-          if (GG.newestFirst !== false) entries.reverse();
-          listBox.innerHTML = '';
-          shown = 0;
-          if (!entries.length) listBox.appendChild(el('p', 'gs-empty', G.emptyText || '첫 번째 방명록을 남겨 주세요!'));
-          showMore();
-        }).catch(function () {
-          listBox.innerHTML = '';
-          listBox.appendChild(el('p', 'gs-empty', '방명록을 불러오지 못했어요.\n시트가 "웹에 게시" 되어 있는지 확인해 주세요.'));
-        });
+          if (snap.docs.length) lastDoc = snap.docs[snap.docs.length - 1];
+          more.hidden = snap.docs.length < PER;
+          if (reset && !snap.docs.length) {
+            listBox.appendChild(el('p', 'gs-empty', view === 'secret' ? '비밀글이 없어요.' : (G.emptyText || '첫 번째 방명록을 남겨 주세요!')));
+          }
+        }).catch(function (e) {
+          if (reset) listBox.innerHTML = '';
+          listBox.appendChild(el('p', 'gs-empty', '방명록을 불러오지 못했어요.\n' + errText(e)));
+        }).then(function () { loading = false; });
       }
-      if (ready) load();
+      more.onclick = function () { load(false); };
 
-      /* 글 보내기 (구글 폼으로 전송) */
+      /* ---------- 오너 로그인 ---------- */
+      function drawAdmin(user) {
+        admin.innerHTML = '';
+        if (user) {
+          isOwner = !FB.ownerUid || user.uid === FB.ownerUid;
+          keyBtn.classList.add('is-on');
+          var bar = el('div', 'gs-admin-bar');
+          bar.appendChild(el('span', '', isOwner ? '오너로 로그인했어요' : '오너 계정이 아니에요'));
+          var out = el('button', 'gs-act', '로그아웃'); out.type = 'button';
+          out.onclick = function () { S.U.signOut(S.auth); };
+          bar.appendChild(out);
+          admin.appendChild(bar);
+          admin.hidden = false;
+          /* 공개 글 / 비밀글 바꿔 보기 */
+          tabs.innerHTML = '';
+          if (isOwner && useSecret) {
+            [['public', '공개 글'], ['secret', '비밀글']].forEach(function (t) {
+              var b = el('button', 'tl-switch-btn' + (view === t[0] ? ' is-active' : ''), t[1]); b.type = 'button';
+              b.onclick = function () { if (view === t[0]) return; view = t[0]; drawAdmin(user); load(true); };
+              tabs.appendChild(b);
+            });
+            tabs.hidden = false;
+          }
+        } else {
+          isOwner = false; keyBtn.classList.remove('is-on');
+          tabs.hidden = true; admin.hidden = true;
+          if (view !== 'public') view = 'public';
+        }
+      }
+      function loginForm() {
+        if (admin.querySelector('.gs-login')) { admin.hidden = !admin.hidden; return; }
+        admin.innerHTML = '';
+        var f = el('form', 'gs-login');
+        f.innerHTML =
+          '<p class="gs-login-t">오너 로그인</p>' +
+          '<input class="gs-input" name="email" type="email" placeholder="이메일" autocomplete="username">' +
+          '<input class="gs-input" name="pw" type="password" placeholder="비밀번호" autocomplete="current-password">' +
+          '<button class="bn-btn" type="submit">로그인</button>';
+        f.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var em = f.email.value.trim(), pw = f.pw.value;
+          if (!em || !pw) { toast('이메일과 비밀번호를 적어 주세요.'); return; }
+          sdk.then(function () { return S.U.signInWithEmailAndPassword(S.auth, em, pw); })
+            .then(function () { toast('로그인했어요.'); })
+            .catch(function (e) {
+              var c = (e && e.code) || '';
+              toast(/invalid|wrong|user-not-found|credential/.test(c) ? '이메일 또는 비밀번호가 맞지 않아요.' :
+                    /too-many/.test(c) ? '잠시 뒤 다시 시도해 주세요.' : '로그인하지 못했어요. ' + errText(e));
+            });
+        });
+        admin.appendChild(f);
+        admin.hidden = false;
+        f.email.focus();
+      }
+      keyBtn.onclick = function () {
+        if (S && S.auth.currentUser) { admin.hidden = !admin.hidden; return; }
+        loginForm();
+      };
+      var firstAuth = true;
+      sdk.then(function () {
+        S.U.onAuthStateChanged(S.auth, function (user) {
+          drawAdmin(user);
+          load(true);                               /* 처음 + 로그인 / 로그아웃할 때 목록 다시 (답글·지우기 버튼) */
+          firstAuth = false;
+        });
+      }).catch(function () {
+        listBox.innerHTML = '';
+        listBox.appendChild(el('p', 'gs-empty', '방명록을 불러오지 못했어요.\n인터넷 연결을 확인해 주세요.'));
+      });
+
+      /* ---------- 글 보내기 ---------- */
       var lock = false;
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
-        if (!ready) { toast('아직 방명록이 연결되지 않았어요.'); return; }
-        if (lock) return;
+        if (lock) { toast('너무 빨라요! 잠깐 뒤에 다시 남겨 주세요.'); return; }
         var name = nameIn.value.trim(), msg = msgIn.value.trim();
         var secretBox = form.querySelector('[name=secret]');
-        var secret = secretBox && secretBox.checked;
+        var secret = !!(secretBox && secretBox.checked);
         if (!name) { toast('이름을 적어 주세요.'); nameIn.focus(); return; }
         if (!msg) { toast('내용을 적어 주세요.'); msgIn.focus(); return; }
 
-        var fd = new FormData();
-        if (GG.nameEntry) fd.append(GG.nameEntry, name);
-        fd.append(GG.messageEntry, msg);
-        if (GG.secretEntry) fd.append(GG.secretEntry, secret ? (GG.secretValue || '비공개') : (GG.publicValue || '공개'));
-
         lock = true;
         form.classList.add('is-sending');
-        fetch(GG.formAction, { method: 'POST', mode: 'no-cors', body: fd }).then(function () {
+        sdk.then(function () {
+          var data = { name: name.slice(0, 20), message: msg.slice(0, MAX), time: S.F.serverTimestamp() };
+          return S.F.addDoc(S.F.collection(S.db, secret ? SCOL : COL), data).then(function (ref) { return { ref: ref, data: data }; });
+        }).then(function (r) {
           msgIn.value = '';
-          form.querySelector('.gs-count').textContent = '0 / ' + (GG.maxLength || 1000);
+          if (secretBox) secretBox.checked = false;
+          form.querySelector('.gs-count').textContent = '0 / ' + MAX;
           if (secret) {
             toast('비밀글을 남겼어요. 오너만 볼 수 있어요.');
+            if (view !== 'secret') return;
           } else {
-            /* 바로 목록 맨 위에 보여주기 (시트에는 몇 분 뒤 반영) */
-            var empty = listBox.querySelector('.gs-empty');
-            if (empty) empty.remove();
-            listBox.insertBefore(card({ name: name, message: msg, time: '방금' }, true), listBox.firstChild);
-            toast('방명록을 남겼어요! 다른 사람에게는 몇 분 뒤에 보여요.');
+            toast('방명록을 남겼어요!');
+            if (view !== 'public') return;
           }
-        }).catch(function () {
-          toast('보내지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+          var empty = listBox.querySelector('.gs-empty');
+          if (empty) empty.remove();
+          var c = card(r.ref, { name: r.data.name, message: r.data.message, time: null }, true);
+          if (NEWEST) listBox.insertBefore(c, listBox.firstChild); else listBox.appendChild(c);
+        }).catch(function (e) {
+          toast('보내지 못했어요. ' + errText(e));
         }).then(function () {
           form.classList.remove('is-sending');
           setTimeout(function () { lock = false; }, 3000);   /* 연속 등록 방지 */
         });
       });
-    }
-
-    /* 구글 시트 시간 "2026. 10. 8 오후 5:56:01" → "2026. 10. 8 오후 5:56" */
-    function shortTime(t) {
-      t = (t || '').trim();
-      return t.replace(/(\d{1,2}:\d{2}):\d{2}$/, '$1');
-    }
-
-    /* CSV 읽기 (따옴표, 줄바꿈 포함 글도 처리) */
-    function parseCSV(text) {
-      var rows = [], row = [], cell = '', q = false;
-      for (var i = 0; i < text.length; i++) {
-        var ch = text[i];
-        if (q) {
-          if (ch === '"') {
-            if (text[i + 1] === '"') { cell += '"'; i++; }
-            else q = false;
-          } else cell += ch;
-        } else if (ch === '"') q = true;
-        else if (ch === ',') { row.push(cell); cell = ''; }
-        else if (ch === '\n' || ch === '\r') {
-          if (ch === '\r' && text[i + 1] === '\n') i++;
-          row.push(cell); rows.push(row); row = []; cell = '';
-        } else cell += ch;
-      }
-      if (cell || row.length) { row.push(cell); rows.push(row); }
-      return rows.filter(function (r) { return r.some(function (c) { return c.trim(); }); });
     }
 
   })();
