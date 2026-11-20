@@ -19,6 +19,7 @@
   scroll-padding-top: 110px;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: radial-gradient(ellipse at 30% 15%, #302a2640, transparent 65%), var(--ink); }
 button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -189,6 +190,32 @@ dialog::backdrop { background: #09080bc9; }
 .toast.is-visible { opacity: 1; visibility: visible; }
 .toast:empty { display: none; }
 .noscript-notice { position: fixed; inset: auto 16px 16px; z-index: 60; border: 1px solid var(--gold); padding: 20px; background: var(--panel); text-align: center; }
+/* 피버 효과는 이미지와 독립 후광에만 적용해 앞뒤 면의 3D 구조를 유지합니다. */
+.fever-aura { display: none; position: absolute; inset: -14px; border-radius: 50%; pointer-events: none; background: conic-gradient(#f7a8b8, #f5d688, #ace3bc, #8cceef, #c0a5ed, #f7a8b8); filter: blur(24px); opacity: .5; transform: translateZ(-8px); }
+.is-fever .fever-aura { display: block; animation: fever-aura 4s linear infinite; }
+.is-fever .coin-face img { animation: fever-rainbow 2s linear infinite; }
+.wallet-value > .fever-timer { color: #f5d688; font-size: 10px; font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.fever-instructions { display: block; }
+.fever-instructions > strong { font: 600 20px/1.3 var(--serif); color: #f4d991; letter-spacing: .12em; }
+.fever-instructions .free-note { margin-top: 6px; }
+.fever-score { display: block; margin-top: 5px; color: #e6d9fb; font-size: 12px; font-variant-numeric: tabular-nums; }
+.fever-track { display: block; width: min(240px, 80%); height: 3px; margin: 12px auto 0; overflow: hidden; background: #ffffff18; }
+.fever-track > span { display: block; width: 100%; height: 100%; transform-origin: left; background: linear-gradient(90deg, #f2acb4, #efd787, #a7dcae, #a3ceee, #c8aff0); }
+.golden-dumpling { position: fixed; right: max(22px, env(safe-area-inset-right)); bottom: calc(100px + env(safe-area-inset-bottom)); z-index: 35; display: flex; flex-direction: column; align-items: center; width: 132px; min-height: 120px; padding: 8px 8px 10px; border: 1px solid #f7cf7880; border-radius: 14px; background: radial-gradient(ellipse at 50% 30%, #ab7c334d, #231c16eb 75%); box-shadow: 0 0 28px #e9b65833, 0 8px 24px #0005; animation: golden-float 2.8s ease-in-out infinite; }
+.golden-dumpling:hover { border-color: #ffe6ab; background-color: #594320; }
+.golden-dumpling:active { scale: .96; }
+.golden-dumpling svg { width: 92px; height: 72px; overflow: visible; filter: drop-shadow(0 0 9px #efbb5480); }
+.golden-shell { fill: url(#dumplingGold); stroke: #ffedb6; stroke-width: 1.5; }
+.golden-folds { stroke: #a6712b; stroke-width: 2; }
+.golden-shine { stroke: #fff8da; stroke-width: 3; }
+.golden-label { font: 400 14px/1.3 var(--serif); color: #ffe6b0; text-align: center; }
+.golden-label small { display: block; margin-top: 5px; font: 10px/1.4 "Trebuchet MS", sans-serif; color: #e3c796; }
+.golden-spark { position: absolute; pointer-events: none; color: #ffe7a1; font-size: 22px; }
+.golden-spark-one { left: 6px; top: 5px; }
+.golden-spark-two { right: 8px; top: 36px; font-size: 14px; }
+@keyframes golden-float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(2deg); } }
+@keyframes fever-rainbow { from { filter: drop-shadow(0 0 7px #ffb196) hue-rotate(0deg); } to { filter: drop-shadow(0 0 7px #ffb196) hue-rotate(360deg); } }
+@keyframes fever-aura { from { transform: translateZ(-8px) rotate(0deg); } to { transform: translateZ(-8px) rotate(360deg); } }
 @media (max-width: 1120px) {
   .game-layout { grid-template-columns: minmax(0, 1fr) 310px; gap: 16px; }
   .edition-label { display: none; }
@@ -263,6 +290,10 @@ dialog::backdrop { background: #09080bc9; }
   .compass-outcome { padding: 12px; }
   .compass-outcome b { font-size: 13px; }
   .dialog-actions { flex-direction: column-reverse; }
+  .golden-dumpling { right: max(14px, env(safe-area-inset-right)); width: 112px; min-height: 110px; }
+  .golden-dumpling svg { width: 78px; height: 62px; }
+  .golden-label { font-size: 12px; }
+  .fever-instructions .free-note { font-size: 11px; }
 }
 @media (max-width: 380px) {
   .desk-note { display: none; }
@@ -276,4 +307,6 @@ dialog::backdrop { background: #09080bc9; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; }
+  .golden-dumpling, .is-fever .fever-aura, .is-fever .coin-face img { animation: none; }
+  .is-fever .coin-face img { filter: drop-shadow(-5px 0 7px #e8b7ec) drop-shadow(5px 0 7px #a8dcca); }
 }

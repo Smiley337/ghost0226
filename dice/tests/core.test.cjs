@@ -183,3 +183,121 @@ test("잘못된 저장 항목은 안전한 초기값으로 복원한다", () => 
   assert.equal(engine.state.lastSide, "heads");
   assert.equal(engine.state.flips, 0);
 });
+
+function feverHarness(saved, initialNow = 1000) {
+  let now = initialNow;
+  let random = 0.75;
+  let draws = 0;
+  const engine = new GameEngine(saved, { now: () => now, random: () => { draws++; return random; }, bonusRandom: () => 0 });
+  return { engine, advance: ms => { now += ms; }, now: () => now, random: value => { random = value; }, draws: () => draws };
+}
+
+test("황금 만두는 정해진 시간에 한 번 등장하고 만료·재등장하며 나침반 중에는 기다린다", () => {
+  const fx = feverHarness({ balance: "100" });
+  fx.advance(config.fever.firstAppearanceMs - 1);
+  assert.equal(fx.engine.updateGolden().visible, false);
+  fx.advance(1);
+  fx.engine.previewCompass();
+  assert.equal(fx.engine.updateGolden().visible, false);
+  fx.engine.beginCompass();
+  assert.equal(fx.engine.claimGolden(), false);
+  fx.engine.finishCompass(fx.engine.serialize().pending.event.id);
+  assert.equal(fx.engine.updateGolden().visible, true);
+  const deadline = fx.engine.goldenInfo().visibleUntil;
+  fx.advance(3000);
+  assert.equal(fx.engine.updateGolden().visibleUntil, deadline);
+  fx.advance(config.fever.visibleMs - 3000);
+  assert.equal(fx.engine.claimGolden(), false);
+  assert.equal(fx.engine.updateGolden().visible, false);
+  fx.advance(config.fever.appearanceMinMs);
+  assert.equal(fx.engine.updateGolden().visible, true);
+});
+
+test("피버는 7초 동안 대기 없이 보상하며 중복 활성화와 종료 후 지급을 막는다", () => {
+  const fx = feverHarness({ balance: "100", levels: { heads: 1, tails: 1 } });
+  fx.advance(config.fever.firstAppearanceMs);
+  fx.engine.updateGolden();
+  assert.equal(fx.engine.claimGolden(), true);
+  const fever = fx.engine.feverInfo();
+  for (let index = 0; index < 50; index++) assert.equal(fx.engine.claimGolden(), false);
+  assert.equal(fx.engine.feverInfo().endsAt, fever.endsAt);
+  assert.equal(fx.engine.previewCompass(), null);
+  assert.equal(fx.engine.buyUpgrade("heads"), false);
+  assert.equal(fx.engine.beginFlip(), null);
+  for (let index = 0; index < 100; index++) {
+    fx.random(index % 2 ? 0.75 : 0.25);
+    const result = fx.engine.rollFever();
+    assert.equal(result.side, index % 2 ? "tails" : "heads");
+    assert.equal(result.reward, index % 2 ? "0.75" : "1.5");
+  }
+  assert.equal(fx.engine.state.balance, "212.5");
+  assert.equal(fx.engine.feverInfo().reward, "112.5");
+  assert.equal(fx.engine.state.flips, 100);
+  assert.equal(fx.draws(), 100);
+  fx.advance(6999);
+  assert.ok(fx.engine.rollFever());
+  fx.advance(1);
+  assert.equal(fx.engine.rollFever(), null);
+  assert.equal(fx.engine.phase, "fever-landing");
+  assert.equal(fx.engine.finishFever(fever.id + 1), null);
+  const result = fx.engine.finishFever(fever.id);
+  assert.equal(result.flips, 101);
+  assert.equal(result.side, "tails");
+  assert.equal(fx.engine.finishFever(fever.id), null);
+  assert.equal(fx.engine.phase, "idle");
+});
+
+test("동전이 공중에 있을 때 획득한 만두는 착지 정산 후 7초를 시작하고 대기 시간도 건너뛴다", () => {
+  const fx = feverHarness();
+  fx.advance(config.fever.firstAppearanceMs);
+  fx.engine.updateGolden();
+  const flip = fx.engine.beginFlip();
+  assert.equal(fx.engine.claimGolden(), true);
+  assert.equal(fx.engine.goldenInfo().queued, true);
+  assert.equal(fx.engine.rollFever(), null);
+  fx.advance(1400);
+  fx.engine.finishFlip(flip.id);
+  assert.equal(fx.engine.state.balance, "0.5");
+  assert.equal(fx.engine.feverInfo().remainingMs, 7000);
+  assert.equal(fx.engine.finishFlip(flip.id), null);
+  assert.equal(fx.engine.rollFever().reward, "0.5");
+  assert.equal(fx.engine.state.balance, "1");
+});
+
+test("피버 새로고침은 남은 시간과 정산된 보상만 복원하고 만료 후에는 재시작하지 않는다", () => {
+  const fx = feverHarness({ levels: { luck: 16, tails: 1 } });
+  fx.advance(config.fever.firstAppearanceMs);
+  fx.engine.updateGolden(); fx.engine.claimGolden();
+  fx.random(0.89);
+  assert.equal(fx.engine.rollFever().side, "heads");
+  fx.random(0.9);
+  assert.equal(fx.engine.rollFever().side, "tails");
+  fx.advance(4000);
+  const saved = JSON.parse(JSON.stringify(fx.engine.serialize()));
+  const restored = feverHarness(saved, fx.now());
+  assert.equal(restored.engine.state.balance, "1.75");
+  assert.equal(restored.engine.feverInfo().remainingMs, 3000);
+  assert.equal(restored.engine.feverInfo().flips, 2);
+  assert.equal(restored.draws(), 0);
+  restored.advance(3000);
+  assert.equal(restored.engine.rollFever(), null);
+  const expired = feverHarness(restored.engine.serialize(), restored.now());
+  assert.equal(expired.engine.phase, "idle");
+  assert.equal(expired.engine.state.balance, "1.75");
+  assert.equal(expired.engine.state.lastSide, "tails");
+  assert.equal(expired.engine.feverInfo(), null);
+});
+
+test("피버 예약 중 새로고침해도 일반 보상은 한 번, 피버 시작도 한 번만 복원한다", () => {
+  const fx = feverHarness();
+  fx.advance(config.fever.firstAppearanceMs);
+  fx.engine.updateGolden(); fx.engine.beginFlip(); fx.engine.claimGolden();
+  const restored = feverHarness(fx.engine.serialize(), fx.now() + 500);
+  assert.equal(restored.engine.state.balance, "0.5");
+  assert.equal(restored.engine.state.flips, 1);
+  assert.equal(restored.engine.feverInfo().remainingMs, 7000);
+  const again = feverHarness(restored.engine.serialize(), restored.now() + 2000);
+  assert.equal(again.engine.state.balance, "0.5");
+  assert.equal(again.engine.state.flips, 1);
+  assert.equal(again.engine.feverInfo().remainingMs, 5000);
+});

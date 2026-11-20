@@ -13,7 +13,7 @@ const source = name => fs.readFileSync(path.join(root, name), "utf8");
 const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
 
 async function fixture(options = {}) {
-  let now = 1000;
+  let now = options.now ?? 1000;
   let random = options.random ?? 0.99;
   let randomCalls = 0;
   let nextTimer = 0;
@@ -87,6 +87,7 @@ async function fixture(options = {}) {
   const elements = new Map();
   for (const match of html.matchAll(/<([a-z]+)\b[^>]*\bid="([^"]+)"[^>]*>/gi)) elements.set(match[2], new Element(match[1]));
   document.body = new Element("body");
+  document.hidden = false;
   document.getElementById = id => { assert.ok(elements.has(id), "실제 index.html에 존재하는 ID: " + id); return elements.get(id); };
   document.createElement = tag => new Element(tag);
   const windowEvents = new Target();
@@ -119,7 +120,8 @@ async function fixture(options = {}) {
   await vm.runInContext(source("app.js"), context, { filename: "app.js" });
   const flush = async () => { for (let count = 0; count < 8; count += 1) await Promise.resolve(); assert.deepEqual(errors, []); };
   return {
-    backing, urls, config: sandbox.COIN_CONFIG, get: id => elements.get(id), saved: () => copy(backing.game), draws: () => randomCalls,
+    backing, urls, config: sandbox.COIN_CONFIG, get: id => elements.get(id), saved: () => copy(backing.game), draws: () => randomCalls, now: () => now,
+    hide: value => { document.hidden = value; },
     random: value => { random = value; },
     upgrade: key => elements.get("upgrades").children.map(card => card.querySelector("button")).find(button => button.attributes["data-upgrade"] === key),
     key: (target = document.body, type = "keydown", repeat = false) => document.emit(type, { target, code: "Space", repeat }),
@@ -262,4 +264,101 @@ test("Node DOM 어댑터: 양면 사진 콜백, 착지 이미지 유지, 상태 
   assert.equal(fx.backing.photos.has("heads"), false);
   assert.equal(fx.backing.photos.get("tails"), tails);
   assert.equal(fx.urls.get(fx.get("tailsImage").src), tails);
+});
+
+test("Node DOM 어댑터: 황금 만두 피버는 입력마다 즉시 지급하고 7초 후 마지막 면으로 착지한다", async () => {
+  const fx = await fixture({ saved: { balance: "100" } });
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  await fx.advance(20000);
+  assert.equal(fx.get("goldenDumpling").hidden, false);
+  fx.get("goldenDumpling").click();
+  const deadline = fx.saved().fever.endsAt;
+  const draws = fx.draws();
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  assert.equal(fx.get("feverTimer").textContent, "FEVER · 7.0s");
+  assert.match(fx.get("coinButton").className, /is-fever/);
+  for (let count = 0; count < 20; count++) {
+    fx.get("goldenDumpling").emit("click");
+    fx.get("coinButton").click();
+  }
+  fx.key();
+  for (let count = 0; count < 30; count++) fx.key(undefined, "keydown", true);
+  fx.key(undefined, "keyup"); fx.key(); fx.key(undefined, "keyup");
+  assert.equal(fx.saved().state.balance, "111");
+  assert.equal(fx.saved().fever.flips, 22);
+  assert.equal(fx.draws() - draws, 22);
+  assert.equal(fx.saved().fever.endsAt, deadline);
+  fx.upgrade("heads").emit("click"); fx.get("compassButton").emit("click"); fx.get("settingsButton").emit("click");
+  assert.equal(fx.saved().state.levels.heads, 0);
+  assert.equal(fx.get("settingsDialog").open, false);
+  assert.equal(fx.get("compassDialog").open, false);
+  await fx.advance(6999);
+  assert.notEqual(fx.get("coinLift").style.transform, "translateY(0px)");
+  fx.get("coinButton").click();
+  assert.equal(fx.saved().state.balance, "111.5");
+  await fx.advance(1);
+  fx.get("coinButton").emit("click"); fx.key();
+  assert.equal(fx.saved().state.balance, "111.5");
+  assert.equal(fx.get("coinButton").disabled, true);
+  await fx.advance(500);
+  assert.equal(fx.saved().fever, null);
+  assert.equal(fx.saved().state.lastSide, "tails");
+  assert.equal(fx.get("coinLift").style.transform, "translateY(0px)");
+  assert.equal(Number(fx.get("coinRotor").style.transform.match(/rotateX\((.+)deg\)/)[1]) % 360, 180);
+  assert.equal(fx.get("coinButton").disabled, false);
+  assert.doesNotMatch(fx.get("coinButton").className, /is-fever/);
+  assert.equal(fx.get("feverTimer").hidden, true);
+});
+
+test("Node DOM 어댑터: 비행 중 예약한 피버는 사진과 소수 보상을 유지하고 남은 시간만 복원한다", async () => {
+  let fx = await fixture({ saved: { balance: "0.005", levels: { tails: 1 } } });
+  const heads = new Blob(["cat"], { type: "image/png" });
+  const tails = new Blob(["dog"], { type: "image/png" });
+  fx.backing.photos.set("heads", heads); fx.backing.photos.set("tails", tails);
+  await fx.advance(20000);
+  fx.get("coinButton").click();
+  fx.get("goldenDumpling").click();
+  assert.equal(fx.saved().golden.queued, true);
+  assert.equal(fx.saved().fever, null);
+  await fx.advance(1400);
+  assert.equal(fx.get("feverTimer").textContent, "FEVER · 7.0s");
+  assert.equal(fx.saved().state.balance, "0.755");
+  fx.get("coinButton").click();
+  assert.equal(fx.saved().state.balance, "1.505");
+  await fx.advance(2000);
+  const deadline = fx.saved().fever.endsAt;
+  fx = await fixture({ backing: fx.backing, now: fx.now() });
+  assert.equal(fx.get("feverTimer").textContent, "FEVER · 5.0s");
+  assert.equal(fx.get("balance").textContent, "1.51");
+  assert.equal(fx.saved().fever.endsAt, deadline);
+  assert.equal(fx.urls.get(fx.get("headsImage").src), heads);
+  assert.equal(fx.urls.get(fx.get("tailsImage").src), tails);
+  assert.match(fx.get("tailsImage").className, /is-custom/);
+  await fx.advance(5000); await fx.advance(500);
+  assert.equal(fx.saved().state.balance, "1.505");
+  assert.equal(fx.saved().state.lastSide, "tails");
+  assert.equal(fx.urls.get(fx.get("tailsImage").src), tails);
+  assert.equal(fx.saved().fever, null);
+});
+
+test("Node DOM 어댑터: 숨겨진 탭·설정에서는 황금 만두를 기다리고 나침반 회전 중에는 숨긴다", async () => {
+  const fx = await fixture({ saved: { balance: "100" } });
+  fx.hide(true); await fx.advance(20000);
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  fx.hide(false); fx.get("settingsButton").click(); await fx.advance(1000);
+  assert.equal(fx.saved().golden.visibleUntil, 0);
+  fx.get("closeSettings").click(); await fx.flush(); await fx.advance(250);
+  assert.equal(fx.get("goldenDumpling").hidden, false);
+  fx.get("compassButton").click();
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  fx.get("confirmCompass").click();
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  fx.get("goldenDumpling").emit("click");
+  assert.equal(fx.saved().fever, null);
+  await fx.advance(2600);
+  assert.equal(fx.get("goldenDumpling").hidden, false);
+  await fx.advance(12000);
+  assert.equal(fx.get("goldenDumpling").hidden, true);
+  fx.get("goldenDumpling").emit("click");
+  assert.equal(fx.saved().fever, null);
 });

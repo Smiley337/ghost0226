@@ -90,12 +90,15 @@
     constructor(saved, options) {
       const settings = options || {};
       this._random = settings.random || Math.random;
+      this._bonusRandom = settings.bonusRandom || Math.random;
       this._now = settings.now || Date.now;
       this._phase = "idle";
       this._cooldownUntil = 0;
       this._pending = null;
       this._preview = null;
       this._nextId = 1;
+      this._fever = null;
+      this._golden = { nextAt: this._now() + config.fever.firstAppearanceMs, visibleUntil: 0, queued: false };
 
       // 저장 형식에 문제가 있어도 기본 상태로 시작하며, 개별 유효 항목은 살립니다.
       const source = saved && typeof saved === "object" ? (saved.state || saved) : {};
@@ -112,11 +115,97 @@
       };
       if (saved && Number.isSafeInteger(saved.nextId) && saved.nextId > 0) this._nextId = saved.nextId;
       this._recoverPending(saved && saved.pending);
+      this._restoreBonus(saved);
     }
 
     get phase() {
       if (this._phase === "cooldown" && this._now() >= this._cooldownUntil) this._phase = "idle";
+      if (this._phase === "fever" && this._now() >= this._fever.endsAt) this._phase = "fever-landing";
       return this._phase;
+    }
+
+    _scheduleGolden(after) {
+      const random = Math.min(1, Math.max(0, Number(this._bonusRandom()) || 0));
+      const delay = config.fever.appearanceMinMs + Math.floor(random * (config.fever.appearanceMaxMs - config.fever.appearanceMinMs));
+      this._golden = { nextAt: after + delay, visibleUntil: 0, queued: false };
+    }
+
+    goldenInfo() {
+      return { ...this._golden, visible: this._golden.visibleUntil > this._now() };
+    }
+
+    updateGolden() {
+      const now = this._now();
+      if (this._golden.queued || this._fever) return this.goldenInfo();
+      if (this._golden.visibleUntil && now >= this._golden.visibleUntil) this._scheduleGolden(now);
+      if (!this._golden.visibleUntil && now >= this._golden.nextAt && ["idle", "cooldown", "flipping"].includes(this.phase)) {
+        this._golden.visibleUntil = now + config.fever.visibleMs;
+      }
+      return this.goldenInfo();
+    }
+
+    claimGolden() {
+      if (!this.goldenInfo().visible || !["idle", "cooldown", "flipping"].includes(this.phase)) return false;
+      // 클릭 첫 순간에 만두를 소모합니다. 연타로 피버 시간을 늘리거나 두 번 시작할 수 없습니다.
+      this._golden.visibleUntil = 0;
+      if (this.phase === "flipping") this._golden.queued = true;
+      else this._startFever();
+      return true;
+    }
+
+    _startFever() {
+      const now = this._now();
+      this._fever = { id: this._nextId++, endsAt: now + config.fever.durationMs, flips: 0, reward: "0" };
+      this._scheduleGolden(this._fever.endsAt);
+      this._phase = "fever";
+      this._cooldownUntil = 0;
+    }
+
+    feverInfo() {
+      if (!this._fever) return null;
+      return { ...this._fever, remainingMs: Math.max(0, this._fever.endsAt - this._now()), phase: this.phase };
+    }
+
+    rollFever() {
+      if (this.phase !== "fever") return null;
+      const effects = this.effects();
+      const side = this._roll() < effects.headsChance ? "heads" : "tails";
+      const event = Object.freeze({ id: this._nextId++, side: side, reward: side === "heads" ? effects.headsReward : effects.tailsReward });
+      // 애니메이션 완료를 기다리지 않고 입력 하나를 즉시 한 번 정산합니다.
+      this.state.balance = addMoney(this.state.balance, event.reward);
+      this.state.lastSide = side;
+      this.state.flips += 1;
+      this._fever.flips += 1;
+      this._fever.reward = addMoney(this._fever.reward, event.reward);
+      return event;
+    }
+
+    finishFever(id) {
+      if (this.phase !== "fever-landing" || this._fever.id !== id) return null;
+      const result = { ...this._fever, side: this.state.lastSide };
+      this._fever = null;
+      this._phase = "idle";
+      return result;
+    }
+
+    _restoreBonus(saved) {
+      const golden = saved && saved.golden;
+      if (golden && Number.isFinite(golden.nextAt) && Number.isFinite(golden.visibleUntil)) {
+        this._golden = { nextAt: golden.nextAt, visibleUntil: golden.visibleUntil, queued: golden.queued === true };
+      }
+      const fever = saved && saved.fever;
+      if (fever && Number.isSafeInteger(fever.id) && fever.id > 0 && Number.isFinite(fever.endsAt)) {
+        this._nextId = Math.max(this._nextId, fever.id + 1);
+        if (fever.endsAt > this._now() && fever.endsAt <= this._now() + config.fever.durationMs) {
+          this._fever = { id: fever.id, endsAt: fever.endsAt, flips: Number.isSafeInteger(fever.flips) && fever.flips >= 0 ? fever.flips : 0, reward: safeBalance(fever.reward, "0") };
+          this._phase = "fever";
+          this._golden.visibleUntil = 0;
+          this._golden.queued = false;
+        }
+      } else if (this._golden.queued) {
+        // 일반 던지기 중 만두를 획득했다면 그 던지기 정산을 복원한 뒤 피버를 시작합니다.
+        this._startFever();
+      }
     }
 
     effects() {
@@ -184,6 +273,7 @@
       this._pending = null;
       this._phase = "cooldown";
       this._cooldownUntil = this._now() + this.effects().cooldownMs;
+      if (this._golden.queued) this._startFever();
       return event;
     }
 
@@ -231,6 +321,9 @@
         version: config.version,
         state: cloneState(this.state),
         nextId: this._nextId,
+        golden: { ...this._golden },
+        // 보상은 이미 state에 들어 있습니다. 남은 실제 시간만 복원하고 재지급하지 않습니다.
+        fever: this._fever ? { ...this._fever } : null,
         // 브라우저가 애니메이션 중 닫혀도 이미 결정된 결과를 다시 추첨하지 않습니다.
         pending: this._pending ? { kind: this._pending.kind, event: { ...this._pending.event } } : null
       };

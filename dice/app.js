@@ -16,6 +16,7 @@
   let toastTimer;
   let compassAngle = 0;
   let renderTimer;
+  let feverAnimationId = null;
 
   function notify(message) {
     $('toast').textContent = message;
@@ -94,20 +95,27 @@
     const effects = engine.effects();
     const phase = engine.phase;
     const idle = phase === 'idle';
+    const fever = engine.feverInfo();
     $('balance').textContent = formatMoney(engine.state.balance);
     $('balance').title = moneyLabel(engine.state.balance);
     $('headsOdds').textContent = percentage(effects.headsChance);
     $('tailsOdds').textContent = percentage(1 - effects.headsChance);
     $('headsReward').textContent = '+' + moneyLabel(effects.headsReward);
     $('tailsReward').textContent = '+' + moneyLabel(effects.tailsReward);
-    $('cooldownValue').textContent = seconds(effects.cooldownMs);
-    $('coinButton').disabled = !idle || anyDialogOpen() || photoBusy;
+    $('cooldownValue').textContent = phase === 'fever' ? 'None · fever' : seconds(effects.cooldownMs);
+    $('coinButton').disabled = !(idle || phase === 'fever') || anyDialogOpen() || photoBusy;
     $('coinButton').setAttribute('aria-label', 'Flip the coin. Current side: ' + sideNames[engine.state.lastSide]);
     $('coinButton').setAttribute('aria-busy', String(phase === 'flipping'));
     $('compassButton').disabled = !idle || anyDialogOpen() || compareMoney(engine.state.balance, '0') <= 0;
     $('settingsButton').disabled = !idle || photoBusy;
-    const statuses = { idle: 'A little luck, at your own pace.', flipping: 'A moment in the air…', cooldown: 'Ready again in a moment.', 'compass-preview': 'Choose when you are ready.', 'compass-spinning': 'Finding a direction…' };
+    const statuses = { idle: 'A little luck, at your own pace.', flipping: engine.goldenInfo().queued ? 'Fever begins after this flip.' : 'A moment in the air…', cooldown: 'Ready again in a moment.', 'compass-preview': 'Choose when you are ready.', 'compass-spinning': 'Finding a direction…', fever: 'Fever time. Every tap is a new flip.', 'fever-landing': 'One last turn, then back to the table.' };
     $('gameStatus').textContent = statuses[phase];
+    $('normalInstructions').hidden = Boolean(fever);
+    $('feverInstructions').hidden = !fever;
+    $('feverTimer').hidden = !fever && !engine.goldenInfo().queued;
+    if (engine.goldenInfo().queued) $('feverTimer').textContent = 'Fever queued';
+    if (fever) paintFever(fever);
+    $('goldenDumpling').hidden = !engine.goldenInfo().visible || !['idle', 'cooldown', 'flipping'].includes(phase) || anyDialogOpen() || photoBusy || document.hidden;
     for (const [key, nodes] of Object.entries(upgradeNodes)) {
       const info = engine.upgradeInfo(key);
       nodes.level.textContent = 'Lv. ' + info.level;
@@ -119,6 +127,98 @@
     }
     clearTimeout(renderTimer);
     if (phase === 'cooldown') renderTimer = setTimeout(render, 40);
+  }
+
+  function paintFever(info) {
+    const clock = info.remainingMs > 0 ? 'FEVER · ' + (info.remainingMs / 1000).toFixed(1) + 's' : 'Fever complete';
+    if ($('feverTimer').textContent !== clock) $('feverTimer').textContent = clock;
+    $('feverProgress').style.transform = 'scaleX(' + info.remainingMs / config.fever.durationMs + ')';
+    $('feverScore').textContent = info.flips + ' flips · +' + moneyLabel(info.reward);
+  }
+
+  function showCoinResult(message, duration = 2000) {
+    clearTimeout(resultTimer);
+    $('coinResult').textContent = message;
+    $('coinResult').classList.add('is-visible');
+    resultTimer = setTimeout(() => $('coinResult').classList.remove('is-visible'), duration);
+  }
+
+  function updateBonus() {
+    const previous = engine.goldenInfo();
+    // 다른 탭이나 대화상자를 보는 동안 새 황금 만두의 제한 시간을 시작하지 않습니다.
+    if (!document.hidden && !anyDialogOpen() && !photoBusy) engine.updateGolden();
+    const current = engine.goldenInfo();
+    if (current.nextAt !== previous.nextAt || current.visibleUntil !== previous.visibleUntil) save();
+    $('goldenDumpling').hidden = !current.visible || !['idle', 'cooldown', 'flipping'].includes(engine.phase) || document.hidden || anyDialogOpen() || photoBusy;
+    if (current.visible && !previous.visible) notify('A golden dumpling appeared. Tap it for 7 seconds of fever.');
+    setTimeout(updateBonus, 250);
+  }
+
+  $('goldenDumpling').addEventListener('click', () => {
+    if (document.hidden || anyDialogOpen() || photoBusy || !engine.claimGolden()) return;
+    save(); render();
+    if (engine.feverInfo()) startFeverAnimation();
+    else notify('Golden dumpling collected. Fever starts after this flip.');
+  });
+
+  async function startFeverAnimation() {
+    const fever = engine.feverInfo();
+    if (!fever || feverAnimationId === fever.id) return;
+    feverAnimationId = fever.id;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('coinButton').classList.add('is-fever');
+    $('coinButton').focus?.({ preventScroll: true });
+    $('coinButton').scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+    // 연타 결과를 스크린 리더가 매번 읽지 않도록 시작과 종료만 별도로 안내합니다.
+    $('coinResult').setAttribute('aria-live', 'off');
+    clearTimeout(resultTimer);
+    $('coinResult').classList.remove('is-visible');
+    notify('Fever time! Click, tap, or press Space without waiting.');
+    const startAngle = coinAngle;
+    const remainingAtStart = fever.remainingMs;
+    const headroom = Math.max(20, $('coinButton').offsetTop - $('coinButton').clientHeight / 2 - 16);
+    const height = reduced ? 16 : Math.min(90, headroom);
+    let lift = 0;
+    await new Promise(resolve => {
+      function frame() {
+        const info = engine.feverInfo();
+        const elapsed = Math.max(0, remainingAtStart - info.remainingMs);
+        const rising = Math.min(1, elapsed / 220);
+        lift = height * (1 - Math.pow(1 - rising, 2));
+        coinAngle = startAngle + elapsed / 1000 * (reduced ? 120 : config.fever.spinDegreesPerSecond);
+        $('coinLift').style.transform = 'translateY(' + -lift + 'px)';
+        $('coinRotor').style.transform = 'rotateX(' + coinAngle + 'deg)';
+        $('coinShadow').style.transform = 'scale(' + (1 - 0.4 * rising) + ')';
+        $('coinShadow').style.opacity = String(0.42 - 0.25 * rising);
+        $('coinShadow').style.filter = 'blur(' + (3 + 9 * rising) + 'px)';
+        paintFever(info);
+        if (info.remainingMs > 0) requestAnimationFrame(frame);
+        else resolve();
+      }
+      requestAnimationFrame(frame);
+    });
+    render();
+    // 마지막으로 실제 지급된 면을 향해 남은 회전을 마칩니다. 이미지를 갈아 끼우지 않습니다.
+    const landingStart = coinAngle;
+    const target = engine.state.lastSide === 'tails' ? 180 : 0;
+    const endAngle = landingStart + (reduced ? 0 : 360) + (target - landingStart % 360 + 360) % 360;
+    await animate(config.fever.landingMs, progress => {
+      $('coinLift').style.transform = 'translateY(' + -lift * (1 - progress * progress) + 'px)';
+      $('coinRotor').style.transform = 'rotateX(' + (landingStart + (endAngle - landingStart) * (1 - Math.pow(1 - progress, 2))) + 'deg)';
+      $('coinShadow').style.transform = 'scale(' + (0.6 + 0.4 * progress) + ')';
+      $('coinShadow').style.opacity = String(0.17 + 0.25 * progress);
+      $('coinShadow').style.filter = 'blur(' + (12 - 9 * progress) + 'px)';
+    });
+    coinAngle = endAngle;
+    $('coinButton').classList.remove('is-fever');
+    $('coinResult').setAttribute('aria-live', 'polite');
+    const result = engine.finishFever(fever.id);
+    feverAnimationId = null;
+    save(); render();
+    if (result) {
+      showCoinResult(sideNames[result.side] + ' · Fever complete');
+      notify('Fever complete: ' + result.flips + ' flips, +' + moneyLabel(result.reward) + '.');
+    }
   }
 
   // 하나의 시간축으로 위치와 회전을 함께 계산합니다. 착지 때 면 이미지를 교체하지 않습니다.
@@ -137,6 +237,16 @@
 
   async function flip() {
     if (anyDialogOpen() || photoBusy) return;
+    if (engine.phase === 'fever') {
+      const result = engine.rollFever();
+      if (!result) return;
+      save();
+      $('balance').textContent = formatMoney(engine.state.balance);
+      $('balance').title = moneyLabel(engine.state.balance);
+      showCoinResult(sideNames[result.side] + ' +' + moneyLabel(result.reward));
+      paintFever(engine.feverInfo());
+      return;
+    }
     const toss = engine.beginFlip();
     if (!toss) return; // 입력 첫 순간에 엔진을 잠가 클릭+스페이스도 한 번만 통과합니다.
     save(); render();
@@ -167,6 +277,7 @@
       $('coinResult').classList.add('is-visible');
       resultTimer = setTimeout(() => $('coinResult').classList.remove('is-visible'), 2000);
       save(); render();
+      if (engine.feverInfo()) startFeverAnimation();
     }
   }
 
@@ -270,4 +381,6 @@
   }
   // 미완료 추첨을 복구한 경우에도 새 정산값을 즉시 저장해 반복 복구를 막습니다.
   save(); render();
+  updateBonus();
+  if (engine.feverInfo()) startFeverAnimation();
 })();

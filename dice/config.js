@@ -20,6 +20,16 @@
     minCooldownMs: 100,
     flipDurationMs: 1400,
     compassDurationMs: 2600,
+    // 황금 만두는 별도 보너스입니다. 피버 중에는 일반 던지기 대기 시간을 적용하지 않습니다.
+    fever: {
+      durationMs: 7000,
+      firstAppearanceMs: 20000,
+      appearanceMinMs: 45000,
+      appearanceMaxMs: 90000,
+      visibleMs: 12000,
+      spinDegreesPerSecond: 2400,
+      landingMs: 500
+    },
     maxImageBytes: 8 * 1024 * 1024,
     defaultImages: {
       heads: "../coin/앞면1.gif",
