@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#151418">
+  <meta name="description" content="A quiet moment of chance. Flip a coin, collect dumplings, and make a little progress at your own pace.">
+  <title>FLIP OUT! · A little chance</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="storage.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+    <header class="topbar">
+      <div class="brand-group">
+        <a class="home-link" href="../" aria-label="Back to home">HOME</a>
+        <a class="brand" href="./" aria-label="FLIP OUT! home">FLIP OUT<span>!</span></a>
+        <span class="edition-label">A LITTLE CHANCE</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="wallet" aria-label="Dumpling balance">
+          <svg class="dumpling-icon" viewBox="0 0 40 32" aria-hidden="true"><path d="M4 23c0-8 7-17 16-17s16 9 16 17c-2 7-30 7-32 0Z"/><path d="m9 13 5 8m0-13 4 11m5-12-2 12m10-6-6 8M4 23c9 3 23 3 32 0"/></svg>
+          <span class="wallet-value"><strong id="balance">0.00</strong><span>dumplings</span></span>
+        </div>
+        <button type="button" class="icon-button settings-button" id="settingsButton" aria-label="Open settings" title="Customize your coin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-2 3 2 2-1 3 3 3 3-1 2 2 3-2 1-3 3-1v-4l-3-1-1-3-3-1Z"/><circle cx="12" cy="11" r="3"/></svg></button>
+      </div>
+    </header>
+  <div class="game-shell">
+    <main class="game-layout">
+      <section class="desk" aria-labelledby="deskTitle">
+        <div class="desk-grain" aria-hidden="true"></div>
+        <header class="desk-heading">
+          <p class="eyebrow">THE COIN TABLE <span aria-hidden="true">/</span> 01</p>
+          <h1 id="deskTitle">A little chance.</h1>
+          <p class="desk-description">One coin. Two sides. Take your time.</p>
+          <span class="desk-sticker" aria-hidden="true">✧</span>
+        </header>
+        <div class="desk-field" id="coinStage">
+          <div class="coin-shadow" id="coinShadow" aria-hidden="true"></div>
+          <button type="button" class="coin-button" id="coinButton" aria-label="Flip the coin" aria-describedby="coinInstructions">
+            <span class="coin-lift" id="coinLift">
+              <span class="coin-rotor" id="coinRotor">
+                <span class="coin-face front" aria-hidden="true"><img id="headsImage" src="../coin/앞면1.gif" alt="" draggable="false"></span>
+                <span class="coin-face back" aria-hidden="true"><img id="tailsImage" src="../coin/뒷면1.gif" alt="" draggable="false"></span>
+              </span>
+            </span>
+          </button>
+          <p class="coin-result" id="coinResult" role="status" aria-live="polite"></p>
+          <div class="coin-instructions" id="coinInstructions"><span class="desktop-instruction">Click to flip <span class="or">or press</span> <kbd>SPACE</kbd></span><span class="touch-instruction">Tap to flip</span><span class="free-note">Every flip is free.</span></div>
+        </div>
+        <div class="desk-accessories">
+          <div class="desk-note"><span class="note-pin" aria-hidden="true"></span><p><strong>A SMALL REMINDER</strong><br>A little progress,<br>one flip at a time.</p></div>
+          <div class="compass-unit">
+            <span class="compass-tag" aria-hidden="true">A DIFFERENT DIRECTION</span>
+            <button type="button" class="compass-button" id="compassButton" aria-label="Open compass: risk your entire dumpling balance" aria-describedby="compassHelp">
+              <span class="compass-ring" aria-hidden="true">
+                <span class="compass-direction north">N</span><span class="compass-direction south">S</span><span class="compass-direction east">E</span><span class="compass-direction west">W</span>
+                <svg class="compass-rose" viewBox="0 0 100 100"><path d="m50 15 7 28 28 7-28 7-7 28-7-28-28-7 28-7Z"/></svg>
+                <span class="compass-needle" id="compassNeedle"><span class="needle-north"></span><span class="needle-south"></span></span>
+                <span class="compass-pin"></span>
+              </span>
+            </button>
+            <span class="compass-caption">The compass</span>
+            <p id="compassHelp">One spin uses your full balance.<br>Tap to review the odds.</p>
+            <p id="compassResult" class="compass-result" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <footer class="desk-footer">
+          <div class="game-status"><span class="status-dot" aria-hidden="true"></span><span id="gameStatus" role="status">A little luck, at your own pace.</span></div>
+          <span id="saveStatus" class="save-status">Autosaved in this browser</span>
+        </footer>
+      </section>
+      <aside class="upgrade-panel" aria-labelledby="upgradeTitle">
+        <div class="panel-heading"><p class="eyebrow">LITTLE IMPROVEMENTS</p><h2 id="upgradeTitle">Make your own luck.</h2><p>Put your dumplings toward the next flip.</p></div>
+        <div class="current-stats" aria-label="Current coin rewards and odds">
+          <div><span class="stat-label">HEADS</span><strong id="headsReward">+1.00 dumpling</strong><small id="headsOdds">50%</small></div>
+          <div><span class="stat-label">TAILS</span><strong id="tailsReward">+0.50 dumplings</strong><small id="tailsOdds">50%</small></div>
+          <div class="cooldown-stat"><span>Time between flips</span><strong id="cooldownValue">0.5s</strong></div>
+        </div>
+        <div id="upgrades" class="upgrade-list" aria-label="Available upgrades"></div>
+        <div class="panel-footnote"><span aria-hidden="true">✧</span><p>Luck improves coin flips.<br>Compass odds always stay the same.</p></div>
+      </aside>
+    </main>
+    <footer class="site-footer"><span>A small game for a quiet moment.</span><span>GHOST0226 <span aria-hidden="true">/</span> FLIP OUT!</span></footer>
+  </div>
+  <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsTitle">
+    <div class="dialog-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2 id="settingsTitle">Two sides of your own.</h2></div><button type="button" class="icon-button close-button" id="closeSettings" aria-label="Close settings">×</button></div>
+    <p class="dialog-description">Choose a picture for each side of your coin. Animated GIFs keep moving, and you can restore either default whenever you like.</p>
+    <div class="image-settings">
+      <section class="image-setting" aria-labelledby="headsSettingTitle"><h3 id="headsSettingTitle">HEADS</h3><img id="headsPreview" class="face-preview" src="../coin/앞면1.gif" alt="Heads image preview"><label class="upload-button" for="headsUpload">Choose heads<input id="headsUpload" type="file" accept="image/png,image/jpeg,image/gif,.png,.jpg,.jpeg,.gif"></label><button type="button" class="text-button" id="resetHeads">Restore default</button></section>
+      <section class="image-setting" aria-labelledby="tailsSettingTitle"><h3 id="tailsSettingTitle">TAILS</h3><img id="tailsPreview" class="face-preview" src="../coin/뒷면1.gif" alt="Tails image preview"><label class="upload-button" for="tailsUpload">Choose tails<input id="tailsUpload" type="file" accept="image/png,image/jpeg,image/gif,.png,.jpg,.jpeg,.gif"></label><button type="button" class="text-button" id="resetTails">Restore default</button></section>
+    </div>
+    <p class="settings-message" id="settingsMessage" role="status" aria-live="polite"></p>
+    <div class="privacy-note"><p>Your pictures stay in this browser. No uploads to a server.<br><span>PNG · JPG/JPEG · GIF. Clearing site data deletes your saves and pictures.</span></p></div>
+  </dialog>
+  <dialog id="compassDialog" class="compass-dialog" aria-labelledby="compassTitle">
+    <div class="dialog-heading"><div><p class="eyebrow">THE COMPASS</p><h2 id="compassTitle">Choose a new direction.</h2></div><span class="dialog-compass-mark" aria-hidden="true">✧</span></div>
+    <p class="dialog-description">Your current balance: <strong id="compassBaseBalance">0.00 dumplings</strong>.<br>One spin applies the selected multiplier to your full balance.</p>
+    <div id="compassOutcomes" class="compass-outcomes" aria-label="Direction probabilities and resulting balances"></div>
+    <p class="rounding-note">Amounts are rounded for display. Every fraction is kept.</p>
+    <p class="compass-warning"><span aria-hidden="true">!</span>North has a 49% chance. It leaves you with 10% of your balance.</p>
+    <div class="dialog-actions"><button type="button" class="secondary-button" id="cancelCompass">Keep playing</button><button type="button" class="primary-button" id="confirmCompass">Spin with full balance</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><p class="noscript-notice">Please enable JavaScript to play FLIP OUT!</p></noscript>
+</body>
+</html>

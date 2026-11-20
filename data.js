@@ -137,6 +137,10 @@ window.SITE = {
     {
       "name": "Guest",
       "link": "#guest"
+    },
+    {
+      "name": "FLIP OUT!",
+      "link": "/dice/"
     }
   ],
   "music": {

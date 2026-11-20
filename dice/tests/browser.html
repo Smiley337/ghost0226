@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>동전 던지기 · 브라우저 통합 검증</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.6 system-ui, sans-serif; color: #213b35; background: #f6f3eb; }
+    body { max-width: 1100px; margin: 28px auto; padding: 0 20px 50px; }
+    h1 { font-size: 1.65rem; margin-bottom: 8px; }
+    p { margin: 8px 0 18px; }
+    button { padding: 12px 22px; border: 0; border-radius: 8px; background: #246553; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #summary { display: inline-block; margin-left: 14px; font-weight: 700; }
+    #results { padding: 0; list-style: none; }
+    #results li { margin: 6px 0; padding: 8px 12px; border-radius: 6px; background: white; border-left: 4px solid #87948a; }
+    #results .pass { border-color: #27865c; }
+    #results .fail { border-color: #b54242; color: #922323; }
+    #fixture { width: 100%; height: 850px; border: 1px solid #c9cfbf; border-radius: 12px; background: white; }
+    .note { color: #5f6d62; font-size: .9rem; }
+    code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>동전 던지기 브라우저 통합 검증</h1>
+  <p>실제 게임 HTML·CSS·스크립트를 아래 프레임에 불러와 입력, 정산, 이미지 업로드와 복원을 확인합니다. 테스트 전용 저장 키만 사용하며 기존 게임 저장은 읽거나 변경하지 않습니다.</p>
+  <button id="run" type="button">테스트 실행</button>
+  <output id="summary" role="status" aria-live="polite">아직 실행하지 않았습니다.</output>
+  <p class="note">HTTP 서버에서 여세요. 예: <code>http://127.0.0.1:4173/dice/tests/browser.html</code>. 실행 중에는 이 탭을 화면에 유지해 주세요. 생성된 두 PNG의 실제 바이트, 원본 GIF 바이트, IndexedDB와 복원 화면을 비교합니다. 테스트가 끝나면 전용 저장 데이터는 삭제됩니다.</p>
+  <ol id="results" aria-label="검증 결과"></ol>
+  <div id="frameHost"></div>
+  <script>
+    'use strict';
+
+    const runButton = document.getElementById('run');
+    const summary = document.getElementById('summary');
+    const results = document.getElementById('results');
+    const frameHost = document.getElementById('frameHost');
+    const baseUrl = new URL('../', location.href);
+    let productionHtml;
+    let currentFixture = null;
+    let testKeys = new Set();
+    let passes = 0;
+    let failures = 0;
+    let sequence = 0;
+    let runId = '';
+
+    function report(ok, label, detail) {
+      const row = document.createElement('li');
+      row.className = ok ? 'pass' : 'fail';
+      row.textContent = (ok ? 'PASS · ' : 'FAIL · ') + label + (detail ? ' — ' + detail : '');
+      results.appendChild(row);
+      if (ok) passes += 1; else failures += 1;
+      summary.textContent = '실행 중 · PASS ' + passes + ' / FAIL ' + failures;
+    }
+
+    function check(condition, label, detail) {
+      report(Boolean(condition), label, condition ? '' : detail);
+      if (!condition) throw new Error(label + (detail ? ': ' + detail : ''));
+    }
+
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    async function waitFor(predicate, label, timeout = 7000) {
+      const started = performance.now();
+      while (performance.now() - started < timeout) {
+        if (predicate()) return;
+        await delay(25);
+      }
+      throw new Error('시간 초과: ' + label);
+    }
+
+    function seed(balance = '0', levels = {}) {
+      return { version: 1, state: { balance, levels: { luck: 0, heads: 0, tails: 0, speed: 0, ...levels }, lastSide: 'heads', flips: 0 }, pending: null, nextId: 1 };
+    }
+
+    function closeConnections(fixture) {
+      if (!fixture || !fixture.win) return;
+      for (const database of fixture.win.__qaDatabases || []) database.close();
+    }
+
+    async function fixture(options = {}) {
+      if (currentFixture) {
+        closeConnections(currentFixture);
+        currentFixture.frame.remove();
+      }
+      const key = options.key || 'ghost0226.coin-game.qa.' + runId + '.' + (++sequence);
+      testKeys.add(key);
+      if (options.saved) localStorage.setItem(key, JSON.stringify(options.saved));
+      const documentCopy = new DOMParser().parseFromString(productionHtml, 'text/html');
+      const base = documentCopy.createElement('base');
+      base.href = baseUrl.href;
+      documentCopy.head.prepend(base);
+      const configScript = Array.from(documentCopy.scripts).find(script => /(?:^|\/)config\.js(?:[?#]|$)/.test(script.getAttribute('src') || ''));
+      if (!configScript) throw new Error('실제 index.html에서 config.js를 찾지 못했습니다.');
+      configScript.removeAttribute('defer');
+      configScript.removeAttribute('async');
+      const setup = documentCopy.createElement('script');
+      // 별도 테스트 프레임에만 설정·난수·DB 연결 추적을 삽입합니다. 제품 코드는 바꾸지 않습니다.
+      setup.textContent = 'window.COIN_CONFIG={...window.COIN_CONFIG,storageKey:' + JSON.stringify(key) + ',flipDurationMs:180,compassDurationMs:200,baseCooldownMs:100,minCooldownMs:10};' +
+        'window.__qaRandom=' + JSON.stringify(options.random === undefined ? 0.99 : options.random) + ';' +
+        'Math.random=function(){return window.__qaRandom;};' +
+        'window.__qaDatabases=[];window.__qaErrors=[];' +
+        'window.addEventListener("error",function(e){window.__qaErrors.push(e.message);});' +
+        'window.addEventListener("unhandledrejection",function(e){window.__qaErrors.push(String(e.reason));});' +
+        'const qaOpen=indexedDB.open.bind(indexedDB);indexedDB.open=function(){const request=qaOpen(...arguments);request.addEventListener("success",function(){window.__qaDatabases.push(request.result);});return request;};';
+      configScript.after(setup);
+      const frame = document.createElement('iframe');
+      frame.id = 'fixture';
+      frame.title = '실제 동전 게임 테스트 프레임';
+      frame.srcdoc = '<!doctype html>\n' + documentCopy.documentElement.outerHTML;
+      frameHost.replaceChildren(frame);
+      const result = { frame, key, get win() { return frame.contentWindow; }, get doc() { return frame.contentDocument; }, get: id => frame.contentDocument.getElementById(id) };
+      currentFixture = result;
+      await waitFor(() => result.doc && result.doc.querySelector('[data-upgrade="heads"]') && result.get('coinButton') && !result.get('coinButton').disabled, '게임 초기화');
+      check(result.win.COIN_CONFIG.storageKey === key, '테스트 저장 공간 격리', key);
+      return result;
+    }
+
+    function saved(fx) {
+      const value = localStorage.getItem(fx.key);
+      if (!value) throw new Error('테스트 저장 데이터가 없습니다.');
+      return JSON.parse(value);
+    }
+
+    function keyboard(fx, target, type, repeat = false) {
+      target.dispatchEvent(new fx.win.KeyboardEvent(type, { key: ' ', code: 'Space', bubbles: true, cancelable: true, repeat }));
+    }
+
+    function forcedClick(fx, element) {
+      element.dispatchEvent(new fx.win.MouseEvent('click', { bubbles: true, cancelable: true }));
+    }
+
+    function angle(element) {
+      const match = element.style.transform.match(/rotate(?:X)?\(([-\d.]+)deg\)/);
+      if (!match) return NaN;
+      return ((Number(match[1]) % 360) + 360) % 360;
+    }
+
+    async function settled(fx) {
+      await waitFor(() => !fx.get('coinButton').disabled && !saved(fx).pending, '착지·대기 시간 완료');
+    }
+
+    async function firstFlipAndSpam() {
+      const fx = await fixture();
+      fx.get('coinButton').click();
+      keyboard(fx, fx.doc.body, 'keydown');
+      for (let count = 0; count < 25; count += 1) {
+        forcedClick(fx, fx.get('coinButton'));
+        keyboard(fx, fx.doc.body, 'keydown', true);
+      }
+      await settled(fx);
+      keyboard(fx, fx.doc.body, 'keydown', true);
+      keyboard(fx, fx.doc.body, 'keydown');
+      await delay(350);
+      const state = saved(fx).state;
+      check(state.balance === '0.5' && fx.get('balance').textContent === '0.50', '첫 뒷면 보상과 화면 표시가 정확히 0.5만두');
+      check(state.flips === 1, '클릭·스페이스 동시 입력 및 키 유지에도 지급은 한 번');
+      check(state.lastSide === 'tails' && angle(fx.get('coinRotor')) === 180, '뒷면 결과가 실제 180도 회전 상태로 착지');
+      keyboard(fx, fx.doc.body, 'keyup');
+      keyboard(fx, fx.doc.body, 'keydown');
+      keyboard(fx, fx.doc.body, 'keyup');
+      await settled(fx);
+      check(saved(fx).state.flips === 2 && saved(fx).state.balance === '1', '키를 놓은 다음 새 입력은 다음 던지기로 처리');
+      check(fx.win.__qaErrors.length === 0, '입력 연타 중 브라우저 오류 없음', fx.win.__qaErrors.join(', '));
+    }
+
+    async function upgradesAndKeyboard() {
+      const fx = await fixture({ saved: seed('100') });
+      const heads = fx.doc.querySelector('[data-upgrade="heads"]');
+      const tails = fx.doc.querySelector('[data-upgrade="tails"]');
+      heads.focus();
+      keyboard(fx, heads, 'keydown');
+      heads.click(); // 비신뢰 키 이벤트는 기본 클릭을 만들지 않으므로 버튼 활성화를 별도로 재현합니다.
+      keyboard(fx, heads, 'keyup');
+      check(saved(fx).state.flips === 0 && saved(fx).state.levels.heads === 1, '업그레이드 버튼의 스페이스 조작에 동전이 던져지지 않음');
+      check(fx.get('headsReward').textContent === '+1.50 dumplings' && fx.get('tailsReward').textContent === '+0.50 dumplings', '앞면 업그레이드는 앞면 수익에만 적용');
+      check(tails.closest('article').querySelector('.upgrade-effect').textContent.includes('0.50 dumplings → 0.75 dumplings'), '구매 전 뒷면의 실제 현재·다음 지급량 표시');
+      tails.click();
+      check(fx.get('headsReward').textContent === '+1.50 dumplings' && fx.get('tailsReward').textContent === '+0.75 dumplings', '뒷면 업그레이드는 뒷면 수익에만 적용');
+      fx.get('settingsButton').focus();
+      keyboard(fx, fx.get('settingsButton'), 'keydown');
+      fx.get('settingsButton').click();
+      keyboard(fx, fx.get('settingsButton'), 'keyup');
+      keyboard(fx, fx.doc.body, 'keydown');
+      keyboard(fx, fx.doc.body, 'keyup');
+      check(fx.get('settingsDialog').open && saved(fx).state.flips === 0, '설정 버튼 조작·열린 설정창의 스페이스가 동전 입력을 차단');
+      fx.get('closeSettings').click();
+    }
+
+    async function compassBoundaries() {
+      const cases = [[0, 'north', '10', 0], [48, 'north', '10', 0], [49, 'south', '150', 180], [97, 'south', '150', 180], [98, 'east', '100', 90], [99, 'west', '500', 270]];
+      for (const [draw, direction, expected, targetAngle] of cases) {
+        const fx = await fixture({ saved: seed('100', { luck: 16 }), random: draw / 100 });
+        fx.get('compassButton').click();
+        const rows = Array.from(fx.get('compassOutcomes').children);
+        if (draw === 0) {
+          check(fx.get('compassDialog').open && fx.get('compassBaseBalance').textContent === '100.00 dumplings', '나침반 확정 전에 정산 기준 잔액 표시');
+          check(rows.map(row => row.children[1].textContent.split('%')[0]).join(',') === '49,49,1,1', '최대 행운에서도 나침반 확률은 49%·49%·1%·1%');
+          check(rows.map(row => row.children[2].textContent).join(',') === '10.00 dumplings,150.00 dumplings,100.00 dumplings,500.00 dumplings', '네 방향의 실제 결과 잔액을 미리 표시');
+        }
+        forcedClick(fx, fx.get('coinButton'));
+        forcedClick(fx, fx.doc.querySelector('[data-upgrade="heads"]'));
+        keyboard(fx, fx.doc.body, 'keydown');
+        keyboard(fx, fx.doc.body, 'keyup');
+        check(saved(fx).state.balance === '100' && saved(fx).state.flips === 0 && saved(fx).state.levels.heads === 0, '나침반 미리보기 중 잔액 잠금 · 구간 ' + draw);
+        fx.get('confirmCompass').click();
+        const confirmed = saved(fx).pending;
+        check(confirmed && confirmed.event.direction === direction && confirmed.event.balance === '100', '한 번 확정한 추첨과 기준 잔액 저장 · 구간 ' + draw);
+        forcedClick(fx, fx.get('coinButton'));
+        forcedClick(fx, fx.doc.querySelector('[data-upgrade="heads"]'));
+        forcedClick(fx, fx.get('confirmCompass'));
+        check(saved(fx).state.balance === '100' && saved(fx).state.flips === 0 && saved(fx).state.levels.heads === 0, '나침반 회전 중 던지기·구매 차단 · 구간 ' + draw);
+        await settled(fx);
+        check(saved(fx).state.balance === expected && angle(fx.get('compassNeedle')) === targetAngle, '나침반 경계 ' + draw + ' → ' + direction + ' · ' + expected + '만두와 정확한 바늘 방향');
+      }
+    }
+
+    async function makePhoto(label, color, cat) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const context = canvas.getContext('2d');
+      context.fillStyle = color;
+      context.fillRect(0, 0, 256, 256);
+      context.fillStyle = '#fff5da';
+      context.beginPath();
+      context.arc(128, 112, 65, 0, Math.PI * 2);
+      context.fill();
+      if (cat) {
+        context.beginPath(); context.moveTo(65, 89); context.lineTo(69, 28); context.lineTo(111, 55); context.fill();
+        context.beginPath(); context.moveTo(146, 55); context.lineTo(189, 28); context.lineTo(192, 89); context.fill();
+      } else {
+        context.beginPath(); context.ellipse(65, 102, 22, 53, -.25, 0, Math.PI * 2); context.fill();
+        context.beginPath(); context.ellipse(191, 102, 22, 53, .25, 0, Math.PI * 2); context.fill();
+      }
+      context.fillStyle = '#2b353b';
+      for (const x of [105, 151]) { context.beginPath(); context.arc(x, 103, 6, 0, Math.PI * 2); context.fill(); }
+      context.beginPath(); context.arc(128, 132, 10, 0, Math.PI * 2); context.fill();
+      context.fillStyle = 'white'; context.textAlign = 'center'; context.font = 'bold 29px sans-serif'; context.fillText(label, 128, 224);
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    async function fingerprint(blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let hash = 2166136261;
+      for (const byte of bytes) hash = Math.imul(hash ^ byte, 16777619);
+      return bytes.length + ':' + (hash >>> 0).toString(16);
+    }
+
+    async function storedPhoto(fx, side) {
+      const store = new fx.win.CoinGameStorage.LocalStore(fx.key);
+      const blob = await store.getPhoto(side);
+      if (store.database) store.database.close();
+      return blob;
+    }
+
+    async function upload(fx, side, blob, name) {
+      const input = fx.get(side + 'Upload');
+      const transfer = new fx.win.DataTransfer();
+      transfer.items.add(new fx.win.File([blob], name, { type: blob.type }));
+      input.files = transfer.files;
+      input.dispatchEvent(new fx.win.Event('change', { bubbles: true }));
+      await waitFor(() => !input.disabled, '사진 검사·저장 완료');
+    }
+
+    async function photoMatches(fx, side, original) {
+      const expected = await fingerprint(original);
+      const stored = await storedPhoto(fx, side);
+      const image = fx.get(side + 'Image');
+      const preview = fx.get(side + 'Preview');
+      await waitFor(() => image.complete && image.naturalWidth > 0 && preview.complete && preview.naturalWidth > 0, '사진 디코딩');
+      const rendered = await fx.win.fetch(image.src).then(response => response.blob());
+      return Boolean(stored) && expected === await fingerprint(stored) && expected === await fingerprint(rendered) && image.src === preview.src;
+    }
+
+    function gifFrameCount(bytes) {
+      let offset = 13;
+      let frames = 0;
+      if (bytes[10] & 128) offset += 3 * 2 ** ((bytes[10] & 7) + 1);
+      const skipBlocks = () => { while (offset < bytes.length) { const count = bytes[offset++]; if (!count) break; offset += count; } };
+      while (offset < bytes.length) {
+        const block = bytes[offset++];
+        if (block === 59) break;
+        if (block === 33) { offset += 1; skipBlocks(); }
+        else if (block === 44) {
+          frames += 1;
+          const packed = bytes[offset + 8];
+          offset += 9;
+          if (packed & 128) offset += 3 * 2 ** ((packed & 7) + 1);
+          offset += 1;
+          skipBlocks();
+        } else break;
+      }
+      return frames;
+    }
+
+    async function photosAndRestoration() {
+      let fx = await fixture({ saved: seed('50') });
+      fx.doc.querySelector('[data-upgrade="heads"]').click();
+      fx.doc.querySelector('[data-upgrade="tails"]').click();
+      fx.get('settingsButton').click();
+      const heads = await makePhoto('HEADS · CAT', '#d36752', true);
+      const tails = await makePhoto('TAILS · DOG', '#427ac0', false);
+      check(await fingerprint(heads) !== await fingerprint(tails), '앞면 고양이·뒷면 강아지 PNG가 서로 다른 이미지');
+      await upload(fx, 'heads', heads, 'heads-cat.png');
+      await upload(fx, 'tails', tails, 'tails-dog.png');
+      check(await photoMatches(fx, 'heads', heads), '앞면 업로드·미리보기·실제 동전·IndexedDB 바이트 일치');
+      check(await photoMatches(fx, 'tails', tails), '뒷면 업로드·미리보기·실제 동전·IndexedDB 바이트 일치');
+      check(fx.win.getComputedStyle(fx.get('headsImage')).objectFit === 'cover' && fx.win.getComputedStyle(fx.get('tailsImage')).objectFit === 'cover', '양면 사진이 비율을 유지하며 원형 영역을 채움');
+      fx.get('closeSettings').click();
+      await settled(fx);
+      fx.win.__qaRandom = 0.99;
+      fx.get('coinButton').click();
+      await settled(fx);
+      check(saved(fx).state.lastSide === 'tails' && saved(fx).state.balance === '41.75' && angle(fx.get('coinRotor')) === 180, '두 사진으로 던진 뒤 강아지 뒷면이 착지하고 0.75만두 지급');
+      check(await photoMatches(fx, 'tails', tails), '착지 직후 뒷면 사진을 교체하지 않고 같은 사진 유지');
+      const beforeReload = saved(fx);
+      const key = fx.key;
+      fx = await fixture({ key });
+      check(JSON.stringify(saved(fx).state) === JSON.stringify(beforeReload.state), '새 프레임 로드 후 잔액·업그레이드·마지막 면 복원');
+      check(angle(fx.get('coinRotor')) === 180 && await photoMatches(fx, 'heads', heads) && await photoMatches(fx, 'tails', tails), '새로고침 후 두 사진과 뒷면 착지 방향까지 복원');
+      fx.get('settingsButton').click();
+      fx.get('resetHeads').click();
+      await waitFor(() => !fx.get('resetHeads').disabled, '앞면 기본 이미지 복원');
+      check(!(await storedPhoto(fx, 'heads')) && !fx.get('headsImage').src.startsWith('blob:'), '한 면을 기본 이미지로 복원하면 그 면의 저장 사진만 제거');
+      check(await photoMatches(fx, 'tails', tails), '앞면 복원 후 뒷면 사용자 사진은 그대로 유지');
+      const gifResponse = await fetch(new URL(fx.win.COIN_CONFIG.defaultImages.heads, baseUrl));
+      if (!gifResponse.ok) throw new Error('기본 GIF를 불러오지 못했습니다.');
+      const gif = await gifResponse.blob();
+      const frameCount = gifFrameCount(new Uint8Array(await gif.arrayBuffer()));
+      check(frameCount > 1, 'GIF 검증에 사용하는 원본은 실제 다중 프레임 이미지', '프레임 수 ' + frameCount);
+      await upload(fx, 'heads', gif, 'animated-heads.gif');
+      check(await photoMatches(fx, 'heads', gif) && (await storedPhoto(fx, 'heads')).type === 'image/gif', 'GIF 모든 프레임의 원본 바이트를 저장하고 이미지로 렌더링');
+      const priorSource = fx.get('headsImage').src;
+      await upload(fx, 'heads', new Blob(['not a PNG'], { type: 'image/png' }), 'fake.png');
+      check(fx.get('headsImage').src === priorSource && await photoMatches(fx, 'heads', gif), '이미지가 아닌 파일을 거부하고 기존 사진 유지');
+      const broken = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0]);
+      await upload(fx, 'heads', new Blob([broken], { type: 'image/png' }), 'broken.png');
+      check(fx.get('headsImage').src === priorSource && await photoMatches(fx, 'heads', gif), '시그니처만 있는 손상 PNG도 거부');
+      fx.get('closeSettings').click();
+      fx = await fixture({ key });
+      check(await photoMatches(fx, 'heads', gif) && await photoMatches(fx, 'tails', tails), 'GIF와 다른 면 PNG가 함께 새로고침 후 복원');
+      check(fx.win.__qaErrors.length === 0, '사진 복원 중 브라우저 오류 없음', fx.win.__qaErrors.join(', '));
+    }
+
+    async function cleanup() {
+      closeConnections(currentFixture);
+      for (const key of testKeys) {
+        localStorage.removeItem(key);
+        await new Promise((resolve, reject) => {
+          const request = indexedDB.deleteDatabase(key + '.photos');
+          request.onsuccess = resolve;
+          request.onerror = () => reject(request.error);
+          request.onblocked = () => reject(new Error('테스트 사진 DB 정리가 다른 연결 때문에 차단되었습니다.'));
+        });
+      }
+      // 마지막 화면은 확인용으로 남깁니다. 저장 DB를 지운 뒤 다시 조작하지 않게 막습니다.
+      if (currentFixture) currentFixture.frame.inert = true;
+    }
+
+    runButton.addEventListener('click', async () => {
+      runButton.disabled = true;
+      results.replaceChildren();
+      passes = 0;
+      failures = 0;
+      sequence = 0;
+      testKeys = new Set();
+      runId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+      summary.textContent = '실제 게임을 불러오는 중…';
+      try {
+        const response = await fetch(new URL('index.html', baseUrl), { cache: 'no-store' });
+        if (!response.ok) throw new Error('index.html 응답: ' + response.status);
+        productionHtml = await response.text();
+        for (const [name, run] of [['기본 던지기·입력 연타', firstFlipAndSpam], ['업그레이드·키보드', upgradesAndKeyboard], ['나침반 경계·잔액 잠금', compassBoundaries], ['사진·GIF·새로고침', photosAndRestoration]]) {
+          try { await run(); }
+          catch (error) { report(false, name + ' 검증 중단', error.message); }
+        }
+      } catch (error) {
+        report(false, '테스트 초기화', error.message);
+      } finally {
+        try { await cleanup(); report(true, '이 실행에서 만든 QA 전용 저장 데이터 정리 완료'); }
+        catch (error) { report(false, 'QA 저장 데이터 정리', error.message); }
+        summary.textContent = '완료 · PASS ' + passes + ' / FAIL ' + failures + (failures ? ' — 실패 항목을 확인해 주세요.' : ' — 모든 검증 통과');
+        runButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
